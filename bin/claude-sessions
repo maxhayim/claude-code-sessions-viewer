@@ -76,22 +76,29 @@ FZF_BOX=(
 # A pinned row at the very top for starting a fresh session, ahead of the
 # alphabetical list. Uses the same 7-tab-field shape as real rows so the
 # same cut -fN extraction works; session_id is a sentinel no real UUID can
-# match.
+# match. Quoted with %q so it can be safely re-embedded, byte-for-byte, in
+# the reload command below (which needs to reconstruct it after a delete).
 NEW_SESSION_ROW=$(printf '\t\t\t__NEW_SESSION__\t\t\t%s+ Start New Session%s' "${BOLD}${ACCENT}" "$RESET")
+NEW_SESSION_ROW_Q=$(printf '%q' "$NEW_SESSION_ROW")
+
+LIST_CMD="{ printf '%s\\n' $NEW_SESSION_ROW_Q; python3 '$PLUGIN_SCRIPTS/list_sessions.py' --tsv --sort-by=session --grouped; }"
 
 # --- All sessions, every project, one list: every session shown by its
 # name (or first-message preview if never renamed), alphabetically, grouped
 # into dictionary-style letter sections (A, B, C, ...). Moving the selection
 # updates the preview pane with when it was last active, where it lives, and
-# the conversation itself. Enter/double-click opens it. ---------------------
-SELECTED=$( { printf '%s\n' "$NEW_SESSION_ROW"; python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=session --grouped; } | \
+# the conversation itself. Enter/double-click opens it; right arrow opens an
+# Open/Delete action menu for the highlighted row (Spotlight-style) and
+# refreshes the list afterward in case it was deleted. -----------------------
+SELECTED=$(eval "$LIST_CMD" | \
   fzf --ansi \
       --delimiter='\t' \
       --with-nth=7 \
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' '{6}' '{1}' '{3}'" \
       --preview-window=right:55%:wrap,border-rounded \
-      --header="enter/double-click: open  ·  esc: cancel" \
+      --header="enter/double-click: open  ·  right arrow: open/delete menu  ·  esc: cancel" \
       --list-label=" All Sessions " \
+      --bind="right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}')+reload($LIST_CMD)" \
       "${FZF_BOX[@]}")
 
 if [ -z "$SELECTED" ]; then
