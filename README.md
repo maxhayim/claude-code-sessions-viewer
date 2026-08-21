@@ -17,15 +17,15 @@
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey)](#requirements)
 
 > **Unofficial, community-built project. Not affiliated with, endorsed by,
-> or sponsored by Anthropic.** "Claude Code" refers to Anthropic's product;
+> or sponsored by Anthropic.** "[Claude Code](https://github.com/anthropics/claude-code)" refers to Anthropic's product;
 > this tool simply reads its local session files.
 
 > **Status: early / unverified.** This has been built and syntax-checked but
 > not yet run end-to-end against real `~/.claude/projects/` data by more
 > than one machine. Expect rough edges. See [Known Limitations](#known-limitations).
 
-**Claude Code Sessions Viewer** lists — and lets you visually browse — every
-Claude Code session you've ever started, across every project directory and
+**Claude Code Sessions Viewer** lists — and lets you visually browse — every 
+[Claude Code](https://github.com/anthropics/claude-code) session you've ever started, across every project directory and
 git worktree on your machine. Claude Code's own picker only shows sessions
 from your current directory unless you know to widen it, and even widened
 it renders as a small fixed-height box with no real preview. This project
@@ -154,8 +154,7 @@ bugs. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and testing notes.
 - [tmux-claude-session-manager](https://github.com/craftzdog/tmux-claude-session-manager) — tmux-based alternative for parallel session management
 
 ## Acknowledgments
-
-"Claude Code" is a trademark of Anthropic, PBC, used here solely to
+"[Claude Code](https://github.com/anthropics/claude-code)" is a trademark of Anthropic, PBC, used here solely to
 describe compatibility. This project is not affiliated with, endorsed by,
 or sponsored by Anthropic. All other trademarks are the property of their
 respective owners.
