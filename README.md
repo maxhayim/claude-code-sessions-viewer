@@ -128,9 +128,10 @@ session, sorted most-recent-first, and either printed as plain text
   documented Claude Code transcript behavior, not yet confirmed against a
   wide range of real `~/.claude/projects/` data. If something breaks, please
   [open an issue](../../issues/new?template=bug_report.md).
-- **`bin/claude-sessions` requires `fzf`.** No fallback visual mode if it's
-  not installed — the plain-text `/list-sessions` command still works
-  without it.
+- **`bin/claude-sessions` requires `fzf`.** If it's missing, the script
+  attempts to auto-install it via `brew` (macOS) or `apt-get` (Debian/
+  Ubuntu); on other systems you'll need to install it manually. The
+  plain-text `/list-sessions` command has no `fzf` dependency at all.
 - **macOS/Linux only, tested on macOS.** Windows is untested; paths and the
   `cd && exec` resume flow may need adjustment.
 

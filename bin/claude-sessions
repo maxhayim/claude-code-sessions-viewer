@@ -14,7 +14,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_SCRIPTS="$SCRIPT_DIR/../plugins/sessions-viewer/scripts"
 
 if ! command -v fzf >/dev/null 2>&1; then
-  echo "fzf is required but not installed. Install it with: brew install fzf" >&2
+  echo "fzf is required but not installed. Attempting to install it now..." >&2
+  if command -v brew >/dev/null 2>&1; then
+    brew install fzf >&2
+  elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update && sudo apt-get install -y fzf >&2
+  else
+    echo "Could not find a supported package manager (brew or apt-get)." >&2
+    echo "Install fzf manually: https://github.com/junegunn/fzf#installation" >&2
+    exit 1
+  fi
+fi
+
+if ! command -v fzf >/dev/null 2>&1; then
+  echo "fzf installation did not complete successfully. Please install it manually and try again." >&2
   exit 1
 fi
 

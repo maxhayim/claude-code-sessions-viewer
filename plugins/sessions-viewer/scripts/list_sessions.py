@@ -44,6 +44,9 @@ def extract_cwd(jsonl_path: Path, max_lines=20):
     except OSError:
         pass
     return None
+
+
+def first_user_message(jsonl_path: Path, max_lines=20):
     """Pull the first human message text as a preview, scanning a bounded
     number of lines so huge sessions don't slow things down."""
     try:
