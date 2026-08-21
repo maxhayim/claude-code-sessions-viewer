@@ -7,11 +7,42 @@ Reads ~/.claude/projects/<encoded-path>/<session-id>.jsonl
 """
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
+
+_repo_name_cache = {}
+
+
+def repo_name(project_path: str) -> str:
+    """The project's real identity: its GitHub/git remote name if it's a git
+    checkout with an origin remote (e.g. "MaXHyM-Scripts" even when the
+    local folder is just called "Repo"), otherwise the folder's own name."""
+    if project_path in _repo_name_cache:
+        return _repo_name_cache[project_path]
+
+    name = None
+    try:
+        result = subprocess.run(
+            ["git", "-C", project_path, "remote", "get-url", "origin"],
+            capture_output=True, text=True, timeout=2,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            url = result.stdout.strip().rstrip("/")
+            if url.endswith(".git"):
+                url = url[:-4]
+            name = url.rsplit("/", 1)[-1] or None
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+    if not name:
+        name = os.path.basename(project_path.rstrip("/")) or project_path
+
+    _repo_name_cache[project_path] = name
+    return name
 
 
 def decode_project_dir(dirname: str) -> str:
@@ -108,7 +139,7 @@ def gather_sessions():
             sessions.append(
                 {
                     "project": real_path,
-                    "project_name": os.path.basename(real_path.rstrip("/")) or real_path,
+                    "project_name": repo_name(real_path),
                     "session_id": jsonl_file.stem,
                     "path": str(jsonl_file),
                     "mtime": mtime,
