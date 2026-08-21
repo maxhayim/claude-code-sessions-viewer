@@ -37,7 +37,7 @@ no real preview. This project adds two things on top:
   session, grouped by project, most recent first.
 - **`bin/claude-sessions`** — a standalone, `fzf`-powered visual browser:
   fuzzy search, arrow-key navigation, per-row context-usage indicators, and
-  a `ctrl-o` Open/Rename/Delete/Back menu (showing that session's info)
+  a `ctrl-o` (or right-click) Open/Rename/Delete/Back menu (showing that session's info)
   for every session.
 
 ## Features
@@ -60,7 +60,7 @@ no real preview. This project adds two things on top:
   ambiguous — see [Known Limitations](#known-limitations))
 - Visual browser (`bin/claude-sessions`) adds fuzzy search and:
   - **Enter / double-click** — resume the session directly
-  - **`ctrl-o`** — an Open / Rename / Delete / Back menu for the
+  - **`ctrl-o` (or right-click)** — an Open / Rename / Delete / Back menu for the
     highlighted session, showing its last-active date, location, and
     context-window usage before you act on it
   - **Tab + `ctrl-x`** — mark several sessions and bulk-delete them in one
@@ -132,7 +132,7 @@ ln -s "$(pwd)/bin/claude-sessions" /usr/local/bin/claude-sessions
 
 Inside the visual browser, everything is keyboard-driven — arrow keys +
 Enter, no mouse needed (double-click also works if you prefer it). There's
-no separate preview pane: `ctrl-o`'s menu shows a session's info right
+no separate preview pane: `ctrl-o` (or right-click)'s menu shows a session's info right
 where you're about to act on it, so a single footer at the bottom of the
 box can genuinely span everything above it.
 
@@ -143,7 +143,7 @@ box can genuinely span everything above it.
   compact context-usage indicator like `[72K/200K]`
 - **Enter / double-click** resumes the highlighted session directly (`cd`s
   into its project directory, then runs `claude --resume <id>`)
-- **`ctrl-o`** opens an action menu for the highlighted session, showing
+- **`ctrl-o` (or right-click)** opens an action menu for the highlighted session, showing
   its last-active date, location, and context usage first:
   - **Open** — same as Enter
   - **Rename** — prompts for a new name and applies it via `/rename`
@@ -180,7 +180,7 @@ live preview command (`bin/claude-sessions`).
 
 ## Known Limitations
 
-- **Delete has no undo.** The ctrl-o menu's Delete action (after
+- **Delete has no undo.** The ctrl-o/right-click menu's Delete action (after
   confirmation) permanently removes that session's `.jsonl` transcript
   file from disk. There's no trash/recovery — it's gone.
 - **Rename and new-session naming rely on an unverified assumption**: that
