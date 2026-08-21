@@ -27,8 +27,16 @@ jobs:
         with:
           scandir: './bin'
 
+      - name: Shellcheck plugin scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './plugins/sessions-viewer/scripts'
+
       - name: Validate marketplace.json
         run: python -m json.tool .claude-plugin/marketplace.json > /dev/null
 
       - name: Validate plugin.json
         run: python -m json.tool plugins/sessions-viewer/.claude-plugin/plugin.json > /dev/null
+
+      - name: Functional tests
+        run: ./tests/test_list_sessions.sh

@@ -12,7 +12,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-PROJECTS_DIR = Path.home() / ".claude" / "projects"
+# Overridable so tests can point this at fixture data instead of the
+# real ~/.claude/projects.
+PROJECTS_DIR = Path(os.environ.get("CLAUDE_SESSIONS_VIEWER_PROJECTS_DIR") or (Path.home() / ".claude" / "projects"))
 
 _repo_name_cache = {}
 
