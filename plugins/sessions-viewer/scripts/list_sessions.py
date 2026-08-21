@@ -209,15 +209,30 @@ def sort_sessions(sessions, sort_by):
     return sessions
 
 
-def print_tsv(sessions):
+def print_tsv(sessions, grouped=False):
     """Machine-readable output for the fzf-powered browser (bin/claude-sessions).
     Columns: date | project_name | location | session_id | preview | path |
     display (the /rename name if the session has one, else the preview
-    text — what the picker actually shows for each row)."""
+    text — what the picker actually shows for each row). When grouped=True,
+    a dictionary-style "§ <letter>" divider row (see print_projects_tsv) is
+    printed before each new starting letter of the display text."""
+    color = "" if os.environ.get("NO_COLOR") else "\033[1;38;2;217;119;87m"
+    reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
+    current_letter = None
+
     for s in sessions:
         when = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
         preview = s["preview"].replace("\t", " ")
         display = (s["name"] or s["preview"]).replace("\t", " ")
+
+        if grouped:
+            letter = display[0].upper() if display else "#"
+            if not letter.isalpha():
+                letter = "#"
+            if letter != current_letter:
+                current_letter = letter
+                print(f"\t\t\t\t\t\t{color}{DIVIDER_MARK} {letter}{reset}")
+
         print(f"{when}\t{s['project_name']}\t{s['project']}\t{s['session_id']}\t{preview}\t{s['path']}\t{display}")
 
 
@@ -314,7 +329,7 @@ def main():
         sessions = [s for s in sessions if s["project_name"] == project_filter]
 
     if "--tsv" in sys.argv:
-        print_tsv(sessions)
+        print_tsv(sessions, grouped="--grouped" in sys.argv)
     else:
         print_human(sessions)
 
