@@ -141,31 +141,30 @@ def print_tsv(sessions):
 
 
 def print_projects_tsv(sessions):
-    """One row per unique project, for the project-picker stage of
-    bin/claude-sessions. Columns: project_name | project_path | session_count
-    | latest_date."""
+    """One row per unique project *name* (not location — two different
+    checkouts of the same-named project are grouped together), for the
+    project-picker stage of bin/claude-sessions. Columns: project_name |
+    session_count | latest_date."""
     projects = {}
     for s in sessions:
-        p = projects.setdefault(
-            s["project"], {"name": s["project_name"], "count": 0, "latest": s["mtime"]}
-        )
+        p = projects.setdefault(s["project_name"], {"count": 0, "latest": s["mtime"]})
         p["count"] += 1
         p["latest"] = max(p["latest"], s["mtime"])
 
-    for path, info in sorted(projects.items(), key=lambda kv: kv[1]["name"].lower()):
+    for name, info in sorted(projects.items(), key=lambda kv: kv[0].lower()):
         when = datetime.fromtimestamp(info["latest"]).strftime("%Y-%m-%d %H:%M")
-        print(f"{info['name']}\t{path}\t{info['count']}\t{when}")
+        print(f"{name}\t{info['count']}\t{when}")
 
 
-def print_project_preview(sessions, project_path):
+def print_project_preview(sessions, project_name):
     """Detail shown in the preview pane while picking a project: every
-    session in that project, most recent first."""
-    matches = [s for s in sessions if s["project"] == project_path]
+    session with that project name, most recent first."""
+    matches = [s for s in sessions if s["project_name"] == project_name]
     if not matches:
         print("No sessions found for this project.")
         return
     matches.sort(key=lambda s: s["mtime"], reverse=True)
-    print(f"{project_path}\n{len(matches)} session(s)\n")
+    print(f"{project_name}\n{len(matches)} session(s)\n")
     for s in matches:
         when = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
         print(f"[{when}] ({s['turns']} lines)  {s['preview']}\n")
@@ -216,7 +215,7 @@ def main():
 
     project_filter = get_arg_value("--project=")
     if project_filter is not None:
-        sessions = [s for s in sessions if s["project"] == project_filter]
+        sessions = [s for s in sessions if s["project_name"] == project_filter]
 
     if "--tsv" in sys.argv:
         print_tsv(sessions)
