@@ -72,6 +72,7 @@ EOF
 # Up to reach the search box before typing works.) Left headroom (85% vs.
 # a near-full 92%) so the banner above isn't at risk of being scrolled out
 # of view by the box growing beneath it.
+# shellcheck disable=SC2054  # commas below are fzf --color value syntax, not array-element separators
 FZF_BOX=(
   --height=85% --margin=2%,4% --padding=1
   --layout=reverse --info=inline
