@@ -23,7 +23,7 @@ case "$DISPLAY_NAME" in
   *§*) exit 0 ;;
 esac
 
-ACCENT_COLOR="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,header:#d97757,footer:#d97757,footer-border:#d97757,border:#d97757,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,info:#d97757,separator:#d97757,scrollbar:#d97757,spinner:#d97757"
+ACCENT_COLOR="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,header:#d97757,footer:#d97757,border:#d97757,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,info:#d97757,separator:#d97757,scrollbar:#d97757,spinner:#d97757"
 
 # `|| true` on each fzf call below is load-bearing: fzf exits non-zero on
 # Esc/no-selection, which under `set -e` would otherwise kill this script
@@ -34,7 +34,6 @@ ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
   --input-border=rounded --input-label=" 🔍 Search " \
   --list-border=rounded --list-label=" $DISPLAY_NAME " \
   --footer="↑↓: navigate  ·  enter: select  ·  esc: back" \
-  --footer-border=rounded \
   --prompt="❯ " --ghost="Type to search" \
   --color="$ACCENT_COLOR") || true
 
@@ -60,8 +59,7 @@ case "$ACTION" in
       --input-border=rounded --input-label=" 🔍 Search " \
       --list-border=rounded --list-label=" Delete: $DISPLAY_NAME " \
       --footer="↑↓: navigate  ·  enter: select  ·  esc: cancel" \
-      --footer-border=rounded \
-      --prompt="❯ " --ghost="Type to search" \
+          --prompt="❯ " --ghost="Type to search" \
       --color="$ACCENT_COLOR") || true
     if [ "$CONFIRM" = "Yes, delete" ]; then
       rm -f -- "$JSONL_PATH"

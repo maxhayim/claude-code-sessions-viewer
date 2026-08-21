@@ -41,7 +41,7 @@ if [ "${#REAL_PATHS[@]}" -eq 0 ]; then
   exit 0
 fi
 
-ACCENT_COLOR="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,header:#d97757,footer:#d97757,footer-border:#d97757,border:#d97757,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,info:#d97757,separator:#d97757,scrollbar:#d97757,spinner:#d97757"
+ACCENT_COLOR="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,header:#d97757,footer:#d97757,border:#d97757,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,info:#d97757,separator:#d97757,scrollbar:#d97757,spinner:#d97757"
 
 COUNT="${#REAL_PATHS[@]}"
 LIST_PREVIEW=$(printf '%s\n' "${REAL_PATHS[@]}" | xargs -n1 basename | sed 's/\.jsonl$//')
@@ -55,7 +55,6 @@ CONFIRM=$(printf 'Cancel\nYes, delete %d session(s)\n' "$COUNT" | fzf \
   --list-border=rounded --list-label=" Bulk Delete " \
   --header="$LIST_PREVIEW" \
   --footer="↑↓: navigate  ·  enter: select  ·  esc: cancel" \
-  --footer-border=rounded \
   --ghost="Type to search" \
   --prompt="❯ " \
   --color="$ACCENT_COLOR") || true
