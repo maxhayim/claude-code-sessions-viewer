@@ -53,15 +53,6 @@ else
 fi
 
 cat <<EOF
-${ACCENT}   ╭──────────────────────────────────────╮
-   │                                        │
-   │   ┌─┐┌─┐┌─┐┬  ┬                        │
-   │   │  ├─┘└─┐└┐┌┘                        │
-   │   └─┘┴  └─┘ └┘   sessions viewer       │
-   │                                        │
-   │   for Claude Code                      │
-   │                                        │
-   ╰──────────────────────────────────────╯${RESET}
 
    ${BOLD}${ACCENT}Claude Code Sessions${RESET}
 
@@ -82,12 +73,18 @@ FZF_BOX=(
   --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757"
 )
 
+# A pinned row at the very top for starting a fresh session, ahead of the
+# alphabetical list. Uses the same 7-tab-field shape as real rows so the
+# same cut -fN extraction works; session_id is a sentinel no real UUID can
+# match.
+NEW_SESSION_ROW=$(printf '\t\t\t__NEW_SESSION__\t\t\t%s+ Start New Session%s' "${BOLD}${ACCENT}" "$RESET")
+
 # --- All sessions, every project, one list: every session shown by its
 # name (or first-message preview if never renamed), alphabetically, grouped
 # into dictionary-style letter sections (A, B, C, ...). Moving the selection
 # updates the preview pane with when it was last active, where it lives, and
 # the conversation itself. Enter/double-click opens it. ---------------------
-SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=session --grouped | \
+SELECTED=$( { printf '%s\n' "$NEW_SESSION_ROW"; python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=session --grouped; } | \
   fzf --ansi \
       --delimiter='\t' \
       --with-nth=7 \
@@ -102,13 +99,24 @@ if [ -z "$SELECTED" ]; then
   exit 0
 fi
 
+SESSION_ID=$(printf '%s' "$SELECTED" | cut -f4)
+
 # Letter-divider rows are unselectable in spirit — if one somehow gets
 # accepted (e.g. a stray Enter), treat it the same as no selection.
 case "$(printf '%s' "$SELECTED" | cut -f7)" in
   *§*) echo "No session selected."; exit 0 ;;
 esac
 
-SESSION_ID=$(printf '%s' "$SELECTED" | cut -f4)
+if [ "$SESSION_ID" = "__NEW_SESSION__" ]; then
+  printf '%sSession name: %s' "${ACCENT}" "${RESET}"
+  read -r NEW_NAME
+  if [ -n "$NEW_NAME" ]; then
+    exec claude "/rename $NEW_NAME"
+  else
+    exec claude
+  fi
+fi
+
 SESSION_PROJECT_PATH=$(printf '%s' "$SELECTED" | cut -f3)
 
 if [ ! -d "$SESSION_PROJECT_PATH" ]; then
