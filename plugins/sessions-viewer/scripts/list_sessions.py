@@ -159,6 +159,11 @@ def gather_sessions():
         if not project_dir.is_dir():
             continue
         fallback_path = decode_project_dir(project_dir.name)
+        # glob("*.jsonl"), not "**/*.jsonl": sub-agent transcripts live one
+        # level deeper, in <session_id>/subagents/agent-*.jsonl. Those are
+        # execution logs for a Task-tool call within a session, not
+        # resumable sessions in their own right, so they're intentionally
+        # not picked up here.
         for jsonl_file in project_dir.glob("*.jsonl"):
             try:
                 mtime = jsonl_file.stat().st_mtime
