@@ -140,6 +140,37 @@ def print_tsv(sessions):
         print(f"{when}\t{s['project_name']}\t{s['project']}\t{s['session_id']}\t{preview}\t{s['path']}")
 
 
+def print_projects_tsv(sessions):
+    """One row per unique project, for the project-picker stage of
+    bin/claude-sessions. Columns: project_name | project_path | session_count
+    | latest_date."""
+    projects = {}
+    for s in sessions:
+        p = projects.setdefault(
+            s["project"], {"name": s["project_name"], "count": 0, "latest": s["mtime"]}
+        )
+        p["count"] += 1
+        p["latest"] = max(p["latest"], s["mtime"])
+
+    for path, info in sorted(projects.items(), key=lambda kv: kv[1]["name"].lower()):
+        when = datetime.fromtimestamp(info["latest"]).strftime("%Y-%m-%d %H:%M")
+        print(f"{info['name']}\t{path}\t{info['count']}\t{when}")
+
+
+def print_project_preview(sessions, project_path):
+    """Detail shown in the preview pane while picking a project: every
+    session in that project, most recent first."""
+    matches = [s for s in sessions if s["project"] == project_path]
+    if not matches:
+        print("No sessions found for this project.")
+        return
+    matches.sort(key=lambda s: s["mtime"], reverse=True)
+    print(f"{project_path}\n{len(matches)} session(s)\n")
+    for s in matches:
+        when = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
+        print(f"[{when}] ({s['turns']} lines)  {s['preview']}\n")
+
+
 def print_human(sessions):
     if not sessions:
         print("No session files found.")
@@ -157,13 +188,35 @@ def print_human(sessions):
         print(f"  [{when}] {s['session_id'][:8]}  ({s['turns']} lines)  {s['preview']}")
 
 
+def get_arg_value(prefix):
+    for arg in sys.argv:
+        if arg.startswith(prefix):
+            return arg[len(prefix):]
+    return None
+
+
 def main():
     if not PROJECTS_DIR.exists():
         print(f"No Claude Code project history found at {PROJECTS_DIR}")
         sys.exit(0)
 
+    sessions = gather_sessions()
+
+    project_preview = get_arg_value("--project-preview=")
+    if project_preview is not None:
+        print_project_preview(sessions, project_preview)
+        return
+
+    if "--projects-tsv" in sys.argv:
+        print_projects_tsv(sessions)
+        return
+
     sort_by = "date" if "--sort-by=date" in sys.argv else "name"
-    sessions = sort_sessions(gather_sessions(), sort_by)
+    sessions = sort_sessions(sessions, sort_by)
+
+    project_filter = get_arg_value("--project=")
+    if project_filter is not None:
+        sessions = [s for s in sessions if s["project"] == project_filter]
 
     if "--tsv" in sys.argv:
         print_tsv(sessions)
