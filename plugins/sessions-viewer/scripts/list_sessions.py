@@ -17,10 +17,13 @@ PROJECTS_DIR = Path.home() / ".claude" / "projects"
 _repo_name_cache = {}
 
 
-def repo_name(project_path: str) -> str:
+def repo_name(project_path: str):
     """The project's real identity: its GitHub/git remote name if it's a git
     checkout with an origin remote (e.g. "MaXHyM-Scripts" even when the
-    local folder is just called "Repo"), otherwise the folder's own name."""
+    local folder is just called "Repo"). Returns (name, is_repo) — is_repo
+    is False when there's no remote to identify it by (not a git repo, or a
+    git repo with no origin configured), so the caller can avoid bucketing
+    unrelated sessions together under a generic folder name."""
     if project_path in _repo_name_cache:
         return _repo_name_cache[project_path]
 
@@ -38,11 +41,12 @@ def repo_name(project_path: str) -> str:
     except (OSError, subprocess.SubprocessError):
         pass
 
+    is_repo = name is not None
     if not name:
         name = os.path.basename(project_path.rstrip("/")) or project_path
 
-    _repo_name_cache[project_path] = name
-    return name
+    _repo_name_cache[project_path] = (name, is_repo)
+    return _repo_name_cache[project_path]
 
 
 def decode_project_dir(dirname: str) -> str:
@@ -161,16 +165,29 @@ def gather_sessions():
             except OSError:
                 continue
             real_path = extract_cwd(jsonl_file) or fallback_path
+            name = session_name(jsonl_file)
+            preview = first_user_message(jsonl_file)
+            folder_name, is_repo = repo_name(real_path)
+            # A real git repo's sessions group together under its repo name.
+            # A session with no identifiable repo (run from a plain folder
+            # like a general workspace root) isn't really part of any
+            # project cohort, so it gets its own top-level entry instead of
+            # being hidden inside a generic folder-name bucket.
+            if is_repo:
+                project_name = folder_name
+            else:
+                raw = name or preview
+                project_name = raw if len(raw) <= 60 else raw[:59] + "…"
             sessions.append(
                 {
                     "project": real_path,
-                    "project_name": repo_name(real_path),
+                    "project_name": project_name,
                     "session_id": jsonl_file.stem,
                     "path": str(jsonl_file),
                     "mtime": mtime,
-                    "preview": first_user_message(jsonl_file),
+                    "preview": preview,
                     "turns": count_lines(jsonl_file),
-                    "name": session_name(jsonl_file),
+                    "name": name,
                 }
             )
     return sessions
