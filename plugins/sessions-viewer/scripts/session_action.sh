@@ -35,8 +35,8 @@ ACCENT_COLOR="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d977
 
 # The main list has no live preview pane (that was a separate box fzf can
 # never share a footer with); this is where that info actually lives now —
-# a static header showing this one session's last-active date, location,
-# and context usage, computed once before opening the menu.
+# shown at the bottom of this menu, below the Open/Rename/Delete/Back
+# options, computed once before opening the menu.
 INFO=$(python3 "$SCRIPT_DIR/preview_session.py" "$JSONL_PATH" "$LAST_ACTIVE" "$CD_PATH" --metadata-only) || INFO=""
 
 # `|| true` on each fzf call below is load-bearing: fzf exits non-zero on
@@ -47,8 +47,7 @@ ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
   --height=~40% --layout=reverse \
   --input-border=rounded --input-label=" 🔍 Search " \
   --list-border=rounded --list-label=" $DISPLAY_NAME " \
-  --header="$INFO" \
-  --footer="↑↓: navigate  ·  enter: select  ·  esc: back" \
+  --footer="$INFO"$'\n''↑↓: navigate  ·  enter: select  ·  esc: back' \
   --footer-border=rounded \
   --prompt="❯ " --ghost="Type to search" \
   --color="$ACCENT_COLOR") || true

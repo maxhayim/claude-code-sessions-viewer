@@ -121,9 +121,9 @@ SELECTED=$(eval "$LIST_CMD" | \
       --with-nth=7 \
       --header="${ACCENT}${LOGO}${RESET}" \
       --header-first \
-      --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · ctrl-o/right-click: open/rename/delete · esc: cancel" \
+      --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · right arrow/ctrl-o/right-click: open/rename/delete · esc: cancel" \
       --list-label=" All Sessions " \
-      --bind="ctrl-o,right-click:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}' '{1}')+reload($LIST_CMD)" \
+      --bind="ctrl-o,right-click,right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}' '{1}')+reload($LIST_CMD)" \
       --bind="ctrl-x:execute(bash '$PLUGIN_SCRIPTS/bulk_delete.sh' {+4} -- {+6})+reload($LIST_CMD)" \
       --bind="ctrl-r:reload($LIST_CMD_DATE)" \
       --bind="ctrl-n:reload($LIST_CMD)" \
