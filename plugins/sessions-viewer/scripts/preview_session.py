@@ -10,6 +10,48 @@ import sys
 MAX_MESSAGES = 12
 MAX_CHARS_PER_MSG = 300
 
+# Claude's standard context window. Some accounts/models have access to a
+# larger extended-context window (up to 1M tokens for some Claude 5
+# models); there's no local, network-free way to know which applies to a
+# given session, so this is a labeled estimate, not an exact figure.
+STANDARD_CONTEXT_WINDOW = 200_000
+
+
+def latest_context_usage(jsonl_path):
+    """Tokens used in the most recent turn's context (input + cache read +
+    cache creation — i.e. everything sent to the model that turn), from
+    the last assistant message's usage block. None if no usage data
+    found."""
+    used = None
+    try:
+        with open(jsonl_path, "r", errors="ignore") as f:
+            for line in f:
+                if '"usage"' not in line:
+                    continue
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                msg = obj.get("message") or {}
+                if msg.get("role") != "assistant":
+                    continue
+                usage = msg.get("usage")
+                if not isinstance(usage, dict):
+                    continue
+                total = (
+                    (usage.get("input_tokens") or 0)
+                    + (usage.get("cache_read_input_tokens") or 0)
+                    + (usage.get("cache_creation_input_tokens") or 0)
+                )
+                if total:
+                    used = total
+    except OSError:
+        pass
+    return used
+
 
 def extract_text(content):
     if isinstance(content, str):
@@ -40,6 +82,16 @@ def main():
         print(f"Last session: {last_active}")
     if location:
         print(f"Location: {location}")
+
+    used = latest_context_usage(path)
+    if used is not None:
+        left = STANDARD_CONTEXT_WINDOW - used
+        print(
+            f"Context: {used:,} used / ~{max(left, 0):,} left "
+            f"(of ~{STANDARD_CONTEXT_WINDOW:,} standard context — actual "
+            f"limit may be higher with extended context)"
+        )
+
     if last_active or location:
         print(f"session_id: {os.path.splitext(os.path.basename(path))[0]}\n")
 
