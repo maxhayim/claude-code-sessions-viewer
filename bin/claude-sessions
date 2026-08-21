@@ -52,17 +52,16 @@ else
   RESET=""
 fi
 
-# Plain ASCII only (+, -, |) for this banner — the earlier version used
-# Unicode box-drawing/pixel-art characters and rendered as a blank box in
-# at least one real terminal/font, so this sticks to characters every
-# terminal can render.
 cat <<EOF
-
-${ACCENT}+--------------------------------------------+
-|                                            |
-|${BOLD}            CLAUDE CODE SESSIONS            ${RESET}${ACCENT}|
-|                                            |
-+--------------------------------------------+${RESET}
+${ACCENT}   ╭──────────────────────────────────────╮
+   │                                        │
+   │   ┌─┐┌─┐┌─┐┬  ┬                        │
+   │   │  ├─┘└─┐└┐┌┘                        │
+   │   └─┘┴  └─┘ └┘   sessions viewer       │
+   │                                        │
+   │   for Claude Code                      │
+   │                                        │
+   ╰──────────────────────────────────────╯${RESET}
 
 EOF
 
