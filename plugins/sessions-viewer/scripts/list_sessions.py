@@ -153,6 +153,54 @@ def count_lines(jsonl_path: Path) -> int:
         return 0
 
 
+# Claude's standard context window. Some accounts/models have access to a
+# larger extended-context window; there's no local, network-free way to
+# know which applies to a given session, so this is a labeled estimate.
+STANDARD_CONTEXT_WINDOW = 200_000
+
+
+def context_tokens_used(jsonl_path: Path):
+    """Tokens used in the most recent turn's context (input + cache read +
+    cache creation), from the last assistant message's usage block. None
+    if no usage data found."""
+    used = None
+    try:
+        with jsonl_path.open("r", errors="ignore") as f:
+            for line in f:
+                if '"usage"' not in line:
+                    continue
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                msg = obj.get("message") or {}
+                if msg.get("role") != "assistant":
+                    continue
+                usage = msg.get("usage")
+                if not isinstance(usage, dict):
+                    continue
+                total = (
+                    (usage.get("input_tokens") or 0)
+                    + (usage.get("cache_read_input_tokens") or 0)
+                    + (usage.get("cache_creation_input_tokens") or 0)
+                )
+                if total:
+                    used = total
+    except OSError:
+        pass
+    return used
+
+
+def format_tokens_short(n: int) -> str:
+    """Compact display: 71784 -> '72K', 200000 -> '200K'."""
+    if n >= 1000:
+        return f"{round(n / 1000)}K"
+    return str(n)
+
+
 def gather_sessions():
     sessions = []
     if not PROJECTS_DIR.exists():
@@ -195,6 +243,7 @@ def gather_sessions():
                     "preview": preview,
                     "turns": count_lines(jsonl_file),
                     "name": name,
+                    "tokens_used": context_tokens_used(jsonl_file),
                 }
             )
     return sessions
@@ -240,7 +289,14 @@ def print_tsv(sessions, grouped=False):
                 current_letter = letter
                 print(f"\t\t\t\t\t\t{color}{DIVIDER_MARK} {letter}{reset}")
 
-        print(f"{when}\t{s['project_name']}\t{s['project']}\t{s['session_id']}\t{preview}\t{s['path']}\t{display}")
+        used = s.get("tokens_used")
+        if used is not None:
+            tokens_str = f"{format_tokens_short(used)}/{format_tokens_short(STANDARD_CONTEXT_WINDOW)}"
+            display_row = f"{display}  [{tokens_str}]"
+        else:
+            display_row = display
+
+        print(f"{when}\t{s['project_name']}\t{s['project']}\t{s['session_id']}\t{preview}\t{s['path']}\t{display_row}")
 
 
 DIVIDER_MARK = "§"  # prefixes letter-group header rows so bin/claude-sessions
@@ -314,7 +370,13 @@ def print_human(sessions):
             current_letter = letter
             print(f"\n{color}§ {letter}{reset}")
         when = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
-        print(f"  [{when}] {s['session_id'][:8]}  ({s['project_name']})  {display}")
+        used = s.get("tokens_used")
+        tokens_str = (
+            f"  [{format_tokens_short(used)}/{format_tokens_short(STANDARD_CONTEXT_WINDOW)}]"
+            if used is not None
+            else ""
+        )
+        print(f"  [{when}] {s['session_id'][:8]}  ({s['project_name']})  {display}{tokens_str}")
 
 
 def get_arg_value(prefix):
