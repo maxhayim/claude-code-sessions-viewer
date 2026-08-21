@@ -67,15 +67,19 @@ ${ACCENT}   ╭─────────────────────�
 
 EOF
 
-# Shared look for both stages below: a centered, roughly square box in the
-# middle of the terminal rather than a full-screen list.
+# Shared look: a large, mostly-full-terminal box (not a small centered
+# tile) so long project/session names don't get clipped, with the search
+# input rendered as its own separate bordered box — like a search engine's
+# search bar — sitting above the results list, which is also its own
+# separate bordered box.
 FZF_BOX=(
-  --height=65% --margin=8%,22% --padding=1
+  --height=92% --margin=2%,4% --padding=1
   --layout=reverse --info=inline
-  --border=rounded --border-label-pos=3
-  --prompt="Search ❯ " --pointer="▶" --marker="✓"
+  --input-border=rounded --input-label=" 🔍 Search " --input-label-pos=3
+  --list-border=rounded --list-label-pos=3
+  --prompt="❯ " --pointer="▶" --marker="✓"
   --bind="double-click:accept"
-  --color="pointer:#d97757,prompt:#d97757,marker:#d97757,border:#d97757,label:#d97757,header:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold"
+  --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757"
 )
 
 # --- All sessions, every project, one list: every session shown by its
@@ -88,9 +92,9 @@ SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=session --
       --delimiter='\t' \
       --with-nth=7 \
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' '{6}' '{1}' '{3}'" \
-      --preview-window=right:60%:wrap,border-rounded \
+      --preview-window=right:55%:wrap,border-rounded \
       --header="enter/double-click: open  ·  esc: cancel" \
-      --border-label=" All Sessions " \
+      --list-label=" All Sessions " \
       "${FZF_BOX[@]}")
 
 if [ -z "$SELECTED" ]; then
