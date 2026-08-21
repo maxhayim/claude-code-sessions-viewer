@@ -171,18 +171,33 @@ def print_tsv(sessions):
         print(f"{when}\t{s['project_name']}\t{s['project']}\t{s['session_id']}\t{preview}\t{s['path']}")
 
 
+DIVIDER_MARK = "§"  # prefixes letter-group header rows so bin/claude-sessions
+                     # can recognize and ignore them if one is ever selected.
+
+
 def print_projects_tsv(sessions):
     """One row per unique project *name* (not location — two different
     checkouts of the same-named project are grouped together), for the
     project-picker stage of bin/claude-sessions. Columns: project_name |
-    session_count | latest_date."""
+    session_count | latest_date. Dictionary-style: a letter divider row is
+    printed before each new starting letter."""
     projects = {}
     for s in sessions:
         p = projects.setdefault(s["project_name"], {"count": 0, "latest": s["mtime"]})
         p["count"] += 1
         p["latest"] = max(p["latest"], s["mtime"])
 
+    color = "" if os.environ.get("NO_COLOR") else "\033[1;38;2;217;119;87m"
+    reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
+
+    current_letter = None
     for name, info in sorted(projects.items(), key=lambda kv: kv[0].lower()):
+        letter = name[0].upper() if name else "#"
+        if not letter.isalpha():
+            letter = "#"
+        if letter != current_letter:
+            current_letter = letter
+            print(f"{color}{DIVIDER_MARK} {letter}{reset}\t\t")
         when = datetime.fromtimestamp(info["latest"]).strftime("%Y-%m-%d %H:%M")
         print(f"{name}\t{info['count']}\t{when}")
 

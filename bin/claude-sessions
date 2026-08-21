@@ -78,9 +78,11 @@ FZF_BOX=(
   --color="pointer:#d97757,prompt:#d97757,marker:#d97757,border:#d97757,label:#d97757,header:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold"
 )
 
-# --- Step 1: pick a project, alphabetically, up front. ---------------------
+# --- Step 1: pick a project, alphabetically, up front, grouped into
+# dictionary-style letter sections (A, B, C, ...). ---------------------------
 PROJECT_SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --projects-tsv | \
-  fzf --delimiter='\t' \
+  fzf --ansi \
+      --delimiter='\t' \
       --preview="python3 '$PLUGIN_SCRIPTS/list_sessions.py' --project-preview='{1}'" \
       --preview-window=down:50%:wrap,border-rounded \
       --header="enter/double-click: see sessions  ·  esc: cancel" \
@@ -93,6 +95,12 @@ if [ -z "$PROJECT_SELECTED" ]; then
 fi
 
 PROJECT_NAME=$(printf '%s' "$PROJECT_SELECTED" | cut -f1)
+
+# Letter-divider rows are unselectable in spirit — if one somehow gets
+# accepted (e.g. a stray Enter), treat it the same as no selection.
+case "$PROJECT_NAME" in
+  *§*) echo "No project selected."; exit 0 ;;
+esac
 
 # --- Step 2: a new box with that project's sessions ("more info"); pick one
 # and open it. ---------------------------------------------------------------
