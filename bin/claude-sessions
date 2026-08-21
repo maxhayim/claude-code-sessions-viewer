@@ -126,6 +126,14 @@ if [ -z "$SELECTED" ]; then
   exit 0
 fi
 
+# --multi means Enter on several Tab-marked rows returns all of them at
+# once, which would silently corrupt every single-session cut -fN below.
+# Refuse to guess which one to open — bulk actions belong to ctrl-x.
+if [ "$(printf '%s\n' "$SELECTED" | wc -l)" -gt 1 ]; then
+  echo "Multiple sessions marked — press ctrl-x to bulk-delete them, or unmark (Tab) all but one and press Enter to open it." >&2
+  exit 1
+fi
+
 SESSION_ID=$(printf '%s' "$SELECTED" | cut -f4)
 
 # Letter-divider rows are unselectable in spirit — if one somehow gets
