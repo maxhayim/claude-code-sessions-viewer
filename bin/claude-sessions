@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# claude-sessions — visual, fuzzy-searchable browser for every Claude Code
+# session on this machine, with a live preview pane. Selecting one resumes it.
+#
+# Requires fzf: brew install fzf
+#
+# Run this directly in your terminal (NOT as a /slash-command inside Claude
+# Code) — resuming a session has to replace the running process, which a
+# plugin command can't do from inside an active session.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_SCRIPTS="$SCRIPT_DIR/../plugins/sessions-viewer/scripts"
+
+if ! command -v fzf >/dev/null 2>&1; then
+  echo "fzf is required but not installed. Install it with: brew install fzf" >&2
+  exit 1
+fi
+
+SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv | \
+  fzf --delimiter='\t' \
+      --with-nth=1,2,3,5 \
+      --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' {6}" \
+      --preview-window=right:60%:wrap \
+      --header="Claude Code Sessions — enter/double-click: resume · esc: cancel" \
+      --bind="double-click:accept" \
+      --prompt="session> ")
+
+if [ -z "$SELECTED" ]; then
+  echo "No session selected."
+  exit 0
+fi
+
+PROJECT=$(printf '%s' "$SELECTED" | cut -f3)
+SESSION_ID=$(printf '%s' "$SELECTED" | cut -f4)
+
+if [ ! -d "$PROJECT" ]; then
+  echo "Project directory no longer exists: $PROJECT" >&2
+  exit 1
+fi
+
+cd "$PROJECT"
+exec claude --resume "$SESSION_ID"

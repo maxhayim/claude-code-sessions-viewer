@@ -1,0 +1,7 @@
+# No Python package dependencies — list_sessions.py and preview_session.py
+# use only the Python standard library.
+#
+# The one external dependency is not a Python package: bin/claude-sessions
+# requires `fzf` on your PATH. Install it with:
+#   brew install fzf        (macOS)
+#   apt install fzf         (Debian/Ubuntu)

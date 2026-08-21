@@ -1,0 +1,8 @@
+{
+  "name": "sessions-viewer",
+  "version": "1.0.0",
+  "description": "Claude Code Sessions Viewer — list and visually browse every Claude Code session you've ever started, across all projects and worktrees, with a live preview pane.",
+  "author": {
+    "name": "maxhayim"
+  }
+}

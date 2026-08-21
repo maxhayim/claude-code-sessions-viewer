@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "claude-code-sessions-viewer",
+  "version": "1.0.0",
+  "description": "Marketplace for the Claude Code Sessions Viewer plugin",
+  "owner": {
+    "name": "maxhayim"
+  },
+  "plugins": [
+    {
+      "name": "sessions-viewer",
+      "description": "List every Claude Code session ever recorded on this machine, grouped by project, with a visual fzf browser and live preview",
+      "source": "./plugins/sessions-viewer",
+      "category": "productivity"
+    }
+  ]
+}
