@@ -1,8 +1,8 @@
 class ClaudeSessionsViewer < Formula
   desc "Visual, fuzzy-searchable browser for every Claude Code session on this machine"
   homepage "https://github.com/maxhayim/claude-code-sessions-viewer"
-  url "https://github.com/maxhayim/claude-code-sessions-viewer/archive/refs/tags/v1.0.0.tar.gz"
-  sha256 "25ee73c9994e688226c457516e57a880be0789b5fc05d4048c5f2748686e9701"
+  url "https://github.com/maxhayim/claude-code-sessions-viewer/archive/refs/tags/v1.0.1.tar.gz"
+  sha256 "3e3f73300b57c8fb2c90b580988b1b5714009064361304a77551979b3f87bdc3"
   license "MIT"
 
   depends_on "fzf"
