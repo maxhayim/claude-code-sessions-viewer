@@ -85,7 +85,8 @@ FZF_BOX=(
   --prompt="❯ " --ghost="Type to search — no need to press anything first" --pointer="▶" --marker="✓"
   --multi
   --bind="double-click:accept"
-  --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,footer:#d97757"
+  --footer-border=rounded
+  --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,footer:#d97757,footer-border:#d97757"
 )
 
 # A pinned row at the very top for starting a fresh session, ahead of the
@@ -118,6 +119,7 @@ SELECTED=$(eval "$LIST_CMD" | \
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' '{6}' '{1}' '{3}'" \
       --preview-window=right:55%:wrap,border-rounded \
       --header="${ACCENT}${LOGO}${RESET}" \
+      --header-first \
       --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · right arrow: open/rename/delete · esc: cancel" \
       --list-label=" All Sessions " \
       --bind="right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}')+reload($LIST_CMD)" \
