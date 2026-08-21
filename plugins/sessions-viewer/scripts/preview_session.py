@@ -78,6 +78,10 @@ def main():
     last_active = sys.argv[2] if len(sys.argv) > 2 else None
     location = sys.argv[3] if len(sys.argv) > 3 else None
 
+    accent = "" if os.environ.get("NO_COLOR") else "\033[38;2;217;119;87m"
+    reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
+    divider = f"{accent}{'─' * 40}{reset}"
+
     if last_active:
         print(f"Last session: {last_active}")
     if location:
@@ -93,14 +97,16 @@ def main():
         )
 
     if last_active or location:
-        print(f"session_id: {os.path.splitext(os.path.basename(path))[0]}\n")
+        print(f"session_id: {os.path.splitext(os.path.basename(path))[0]}")
+
+    print(divider)
 
     shown = 0
     try:
         with open(path, "r", errors="ignore") as f:
             for line in f:
                 if shown >= MAX_MESSAGES:
-                    print("\n... (truncated, showing first messages only)")
+                    print("... (truncated, showing first messages only)")
                     break
                 line = line.strip()
                 if not line:
@@ -118,7 +124,8 @@ def main():
                     continue
                 text = text[:MAX_CHARS_PER_MSG]
                 label = "You" if role == "user" else "Claude"
-                print(f"[{label}] {text}\n")
+                print(f"[{label}] {text}")
+                print(divider)
                 shown += 1
     except OSError as e:
         print(f"Could not read session: {e}")
