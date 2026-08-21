@@ -77,7 +77,7 @@ FZF_BOX=(
   --layout=reverse --info=inline
   --input-border=rounded --input-label=" 🔍 Search " --input-label-pos=3
   --list-border=rounded --list-label-pos=3
-  --prompt="❯ " --pointer="▶" --marker="✓"
+  --prompt="❯ " --ghost="Type to search — no need to press anything first" --pointer="▶" --marker="✓"
   --bind="double-click:accept"
   --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,footer:#d97757"
 )

@@ -34,7 +34,7 @@ ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
   --input-border=rounded --input-label=" 🔍 Search " \
   --list-border=rounded --list-label=" $DISPLAY_NAME " \
   --footer="↑↓: navigate  ·  enter: select  ·  esc: back" \
-  --prompt="❯ " \
+  --prompt="❯ " --ghost="Type to search" \
   --color="$ACCENT_COLOR") || true
 
 case "$ACTION" in
@@ -59,7 +59,7 @@ case "$ACTION" in
       --input-border=rounded --input-label=" 🔍 Search " \
       --list-border=rounded --list-label=" Delete: $DISPLAY_NAME " \
       --footer="↑↓: navigate  ·  enter: select  ·  esc: cancel" \
-      --prompt="❯ " \
+      --prompt="❯ " --ghost="Type to search" \
       --color="$ACCENT_COLOR") || true
     if [ "$CONFIRM" = "Yes, delete" ]; then
       rm -f -- "$JSONL_PATH"
