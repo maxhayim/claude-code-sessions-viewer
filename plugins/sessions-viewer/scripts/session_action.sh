@@ -23,17 +23,18 @@ case "$DISPLAY_NAME" in
   *§*) exit 0 ;;
 esac
 
-ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,footer:#d97757,border:#d97757"
+ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,footer:#d97757,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold"
 
 # `|| true` on each fzf call below is load-bearing: fzf exits non-zero on
 # Esc/no-selection, which under `set -e` would otherwise kill this script
 # right there — silently, before the case block below ever runs — instead
 # of treating Esc the same as picking "Back"/"Cancel".
 ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
-  --height=~30% --layout=reverse --border=rounded \
-  --header="$DISPLAY_NAME" \
+  --height=~40% --layout=reverse \
+  --input-border=rounded --input-label=" 🔍 Search " \
+  --list-border=rounded --list-label=" $DISPLAY_NAME " \
   --footer="↑↓: navigate  ·  enter: select  ·  esc: back" \
-  --prompt="Action ❯ " \
+  --prompt="❯ " \
   --color="$ACCENT_COLOR") || true
 
 case "$ACTION" in
@@ -54,10 +55,11 @@ case "$ACTION" in
     ;;
   Delete)
     CONFIRM=$(printf 'Cancel\nYes, delete\n' | fzf \
-      --height=~30% --layout=reverse --border=rounded \
-      --header="Delete: $DISPLAY_NAME" \
+      --height=~40% --layout=reverse \
+      --input-border=rounded --input-label=" 🔍 Search " \
+      --list-border=rounded --list-label=" Delete: $DISPLAY_NAME " \
       --footer="↑↓: navigate  ·  enter: select  ·  esc: cancel" \
-      --prompt="Confirm ❯ " \
+      --prompt="❯ " \
       --color="$ACCENT_COLOR") || true
     if [ "$CONFIRM" = "Yes, delete" ]; then
       rm -f -- "$JSONL_PATH"
