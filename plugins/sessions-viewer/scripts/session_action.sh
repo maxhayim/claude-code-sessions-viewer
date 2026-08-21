@@ -23,7 +23,7 @@ case "$DISPLAY_NAME" in
   *§*) exit 0 ;;
 esac
 
-ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,border:#d97757"
+ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,footer:#d97757,border:#d97757"
 
 # `|| true` on each fzf call below is load-bearing: fzf exits non-zero on
 # Esc/no-selection, which under `set -e` would otherwise kill this script
@@ -31,7 +31,8 @@ ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,border:#d97757"
 # of treating Esc the same as picking "Back"/"Cancel".
 ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
   --height=~30% --layout=reverse --border=rounded \
-  --header="$DISPLAY_NAME"$'\n''↑↓: navigate  ·  enter: select  ·  esc: back' \
+  --header="$DISPLAY_NAME" \
+  --footer="↑↓: navigate  ·  enter: select  ·  esc: back" \
   --prompt="Action ❯ " \
   --color="$ACCENT_COLOR") || true
 
@@ -54,7 +55,8 @@ case "$ACTION" in
   Delete)
     CONFIRM=$(printf 'Cancel\nYes, delete\n' | fzf \
       --height=~30% --layout=reverse --border=rounded \
-      --header="Delete: $DISPLAY_NAME"$'\n''↑↓: navigate  ·  enter: select  ·  esc: cancel' \
+      --header="Delete: $DISPLAY_NAME" \
+      --footer="↑↓: navigate  ·  enter: select  ·  esc: cancel" \
       --prompt="Confirm ❯ " \
       --color="$ACCENT_COLOR") || true
     if [ "$CONFIRM" = "Yes, delete" ]; then
