@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
 Print a readable preview of a Claude Code session transcript for the fzf
-preview pane. Usage: preview_session.py <path-to-jsonl> [last-active] [location]
+preview pane. Usage: preview_session.py <path-to-jsonl> [last-active] [location] [--metadata-only]
+
+--metadata-only prints just the Last session/Location/Context/session_id
+block (no keyboard hint, no conversation) — used by session_action.sh to
+show a session's info as a static header in its Open/Rename/Delete menu.
 """
 import json
 import os
@@ -76,20 +80,24 @@ def main():
         print("Select a session to preview it here.")
         return
 
-    path = sys.argv[1]
-    last_active = sys.argv[2] if len(sys.argv) > 2 else None
-    location = sys.argv[3] if len(sys.argv) > 3 else None
+    args = [a for a in sys.argv[1:] if a != "--metadata-only"]
+    metadata_only = "--metadata-only" in sys.argv
+
+    path = args[0] if len(args) > 0 else ""
+    last_active = args[1] if len(args) > 1 else None
+    location = args[2] if len(args) > 2 else None
 
     accent = "" if os.environ.get("NO_COLOR") else "\033[38;2;217;119;87m"
     reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
     divider = f"{accent}{'─' * 40}{reset}"
 
-    # fzf's --footer is structurally tied to the Search/list column and
-    # cannot reach this preview pane in any layout — so the only way to
-    # show keyboard hints "with" the preview is to print them as part of
-    # its own content, here.
-    print(f"{accent}enter/double-click: open  ·  right arrow: open/rename/delete{reset}")
-    print(divider)
+    if not metadata_only:
+        # fzf's --footer is structurally tied to the Search/list column and
+        # cannot reach this preview pane in any layout — so the only way to
+        # show keyboard hints "with" the preview is to print them as part
+        # of its own content, here.
+        print(f"{accent}enter/double-click: open  ·  right arrow: open/rename/delete{reset}")
+        print(divider)
 
     if last_active:
         print(f"Last session: {last_active}")
@@ -107,6 +115,9 @@ def main():
 
     if last_active or location:
         print(f"session_id: {os.path.splitext(os.path.basename(path))[0]}")
+
+    if metadata_only:
+        return
 
     print(divider)
 
