@@ -103,7 +103,7 @@ SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=date --pro
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' {6}" \
       --preview-window=right:60%:wrap,border-rounded \
       --header="enter/double-click: resume  ·  esc: cancel" \
-      --border-label=" Project Names: › $PROJECT_NAME " \
+      --border-label=" Sessions: $PROJECT_NAME " \
       "${FZF_BOX[@]}")
 
 if [ -z "$SELECTED" ]; then
