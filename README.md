@@ -133,9 +133,11 @@ Enter, no mouse needed (double-click also works if you prefer it):
   search box is always live, no need to navigate to it first
 - **↑ / ↓** to move through the list; sessions are grouped into
   dictionary-style letter sections (`§ A`, `§ B`, ...)
-- The pane below the list live-previews when the session was last active,
+- The right-hand pane live-previews when the session was last active,
   where it lives, its context-window usage, and the conversation itself,
-  with orange page-break dividers between each section
+  with orange page-break dividers between each section (this pane sits
+  beside the list, not below it — so the footer's keyboard instructions
+  apply to the Search/All Sessions column specifically, not the preview)
 - **Enter / double-click** resumes the highlighted session (`cd`s into its
   project directory, then runs `claude --resume <id>`)
 - **Right arrow** opens an action menu for the highlighted session:
