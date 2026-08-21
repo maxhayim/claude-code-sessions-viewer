@@ -84,6 +84,13 @@ def main():
     reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
     divider = f"{accent}{'─' * 40}{reset}"
 
+    # fzf's --footer is structurally tied to the Search/list column and
+    # cannot reach this preview pane in any layout — so the only way to
+    # show keyboard hints "with" the preview is to print them as part of
+    # its own content, here.
+    print(f"{accent}enter/double-click: open  ·  right arrow: open/rename/delete{reset}")
+    print(divider)
+
     if last_active:
         print(f"Last session: {last_active}")
     if location:
