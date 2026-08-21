@@ -25,10 +25,14 @@ esac
 
 ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,border:#d97757"
 
+# `|| true` on each fzf call below is load-bearing: fzf exits non-zero on
+# Esc/no-selection, which under `set -e` would otherwise kill this script
+# right there — silently, before the case block below ever runs — instead
+# of treating Esc the same as picking "Back"/"Cancel".
 ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
   --height=~30% --layout=reverse --border=rounded \
   --header="$DISPLAY_NAME" --prompt="Action ❯ " \
-  --color="$ACCENT_COLOR")
+  --color="$ACCENT_COLOR") || true
 
 case "$ACTION" in
   Open)
@@ -37,20 +41,20 @@ case "$ACTION" in
       read -r -p "Press enter to continue..." _
       exit 0
     fi
-    (cd "$CD_PATH" && claude --resume "$SESSION_ID")
+    (cd "$CD_PATH" && claude --resume "$SESSION_ID") || true
     ;;
   Rename)
     printf 'New name: '
     read -r NEW_NAME
     if [ -n "$NEW_NAME" ]; then
-      claude --resume "$SESSION_ID" "/rename $NEW_NAME"
+      claude --resume "$SESSION_ID" "/rename $NEW_NAME" || true
     fi
     ;;
   Delete)
     CONFIRM=$(printf 'Cancel\nYes, delete\n' | fzf \
       --height=~30% --layout=reverse --border=rounded \
       --header="Delete: $DISPLAY_NAME" --prompt="Confirm ❯ " \
-      --color="$ACCENT_COLOR")
+      --color="$ACCENT_COLOR") || true
     if [ "$CONFIRM" = "Yes, delete" ]; then
       rm -f -- "$JSONL_PATH"
     fi
