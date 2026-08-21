@@ -78,46 +78,31 @@ FZF_BOX=(
   --color="pointer:#d97757,prompt:#d97757,marker:#d97757,border:#d97757,label:#d97757,header:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold"
 )
 
-# --- Step 1: pick a project, alphabetically, up front, grouped into
-# dictionary-style letter sections (A, B, C, ...). ---------------------------
-PROJECT_SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --projects-tsv | \
+# --- All sessions, every project, one list: every session shown by its
+# name (or first-message preview if never renamed), alphabetically, grouped
+# into dictionary-style letter sections (A, B, C, ...). Moving the selection
+# updates the preview pane with when it was last active, where it lives, and
+# the conversation itself. Enter/double-click opens it. ---------------------
+SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=session --grouped | \
   fzf --ansi \
       --delimiter='\t' \
-      --preview="python3 '$PLUGIN_SCRIPTS/list_sessions.py' --project-preview='{1}'" \
-      --preview-window=down:50%:wrap,border-rounded \
-      --header="enter/double-click: see sessions  ·  esc: cancel" \
-      --border-label=" Project Names: " \
-      "${FZF_BOX[@]}")
-
-if [ -z "$PROJECT_SELECTED" ]; then
-  echo "No project selected."
-  exit 0
-fi
-
-PROJECT_NAME=$(printf '%s' "$PROJECT_SELECTED" | cut -f1)
-
-# Letter-divider rows are unselectable in spirit — if one somehow gets
-# accepted (e.g. a stray Enter), treat it the same as no selection.
-case "$PROJECT_NAME" in
-  *§*) echo "No project selected."; exit 0 ;;
-esac
-
-# --- Step 2: a new box with that project's sessions ("more info"), named
-# (via /rename) sessions shown by name, alphabetically; pick one and open
-# it. ------------------------------------------------------------------------
-SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=session --project="$PROJECT_NAME" | \
-  fzf --delimiter='\t' \
-      --with-nth=1,7 \
-      --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' {6}" \
+      --with-nth=7 \
+      --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' '{6}' '{1}' '{3}'" \
       --preview-window=right:60%:wrap,border-rounded \
       --header="enter/double-click: open  ·  esc: cancel" \
-      --border-label=" Sessions: $PROJECT_NAME " \
+      --border-label=" All Sessions " \
       "${FZF_BOX[@]}")
 
 if [ -z "$SELECTED" ]; then
   echo "No session selected."
   exit 0
 fi
+
+# Letter-divider rows are unselectable in spirit — if one somehow gets
+# accepted (e.g. a stray Enter), treat it the same as no selection.
+case "$(printf '%s' "$SELECTED" | cut -f7)" in
+  *§*) echo "No session selected."; exit 0 ;;
+esac
 
 SESSION_ID=$(printf '%s' "$SELECTED" | cut -f4)
 SESSION_PROJECT_PATH=$(printf '%s' "$SELECTED" | cut -f3)

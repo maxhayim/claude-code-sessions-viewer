@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 Print a readable preview of a Claude Code session transcript for the fzf
-preview pane. Usage: preview_session.py <path-to-jsonl>
+preview pane. Usage: preview_session.py <path-to-jsonl> [last-active] [location]
 """
 import json
+import os
 import sys
 
 MAX_MESSAGES = 12
@@ -32,6 +33,16 @@ def main():
         return
 
     path = sys.argv[1]
+    last_active = sys.argv[2] if len(sys.argv) > 2 else None
+    location = sys.argv[3] if len(sys.argv) > 3 else None
+
+    if last_active:
+        print(f"Last session: {last_active}")
+    if location:
+        print(f"Location: {location}")
+    if last_active or location:
+        print(f"session_id: {os.path.splitext(os.path.basename(path))[0]}\n")
+
     shown = 0
     try:
         with open(path, "r", errors="ignore") as f:
