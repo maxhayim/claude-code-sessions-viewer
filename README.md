@@ -15,14 +15,16 @@
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey)](#requirements)
+[![Release](https://img.shields.io/badge/Release-v1.0.0-blue)](https://github.com/maxhayim/claude-code-sessions-viewer/releases/tag/v1.0.0)
 
 > **Unofficial, community-built project. Not affiliated with, endorsed by,
 > or sponsored by Anthropic.** "[Claude Code](https://github.com/anthropics/claude-code)" refers to Anthropic's product;
 > this tool simply reads its local session files.
 
-> **Status: early / unverified.** This has been built and syntax-checked but
-> not yet run end-to-end against real `~/.claude/projects/` data by more
-> than one machine. Expect rough edges. See [Known Limitations](#known-limitations).
+> **Status: v1.0.0.** Verified end-to-end against real
+> `~/.claude/projects/` data, including the Homebrew install path. See
+> [Known Limitations](#known-limitations) for what's still untested (multi-
+> machine coverage, Windows).
 
 **Claude Code Sessions Viewer** lists — and lets you visually browse — every 
 [Claude Code](https://github.com/anthropics/claude-code) session you've ever started, across every project directory and
@@ -80,8 +82,19 @@ sample output.
 
 ### Install the visual browser
 
+**Via Homebrew (recommended, macOS/Linux):**
+```bash
+brew tap maxhayim/claude-code-sessions-viewer https://github.com/maxhayim/claude-code-sessions-viewer
+brew install claude-sessions-viewer
+claude-sessions
+```
+This pulls in `fzf` and Python automatically as dependencies.
+
+**Manual install:**
 ```bash
 brew install fzf   # macOS; use your package manager on Linux
+# bin/claude-sessions also auto-installs fzf via brew/apt-get on first
+# run if it's missing
 
 git clone https://github.com/maxhayim/claude-code-sessions-viewer.git
 cd claude-code-sessions-viewer
@@ -124,9 +137,10 @@ session, sorted most-recent-first, and either printed as plain text
   project works around it by reading the transcript's own `cwd` field
   instead, but if an older or unusual transcript is missing that field, it
   falls back to the ambiguous decode and may point at the wrong directory.
-- **Not yet verified across machines.** Built and reviewed against
-  documented Claude Code transcript behavior, not yet confirmed against a
-  wide range of real `~/.claude/projects/` data. If something breaks, please
+- **Verified on one machine so far (macOS).** Confirmed working end-to-end,
+  including the Homebrew install path, against real `~/.claude/projects/`
+  data on a single machine. Not yet confirmed across a wide range of
+  machines/data. If something breaks, please
   [open an issue](../../issues/new?template=bug_report.md).
 - **`bin/claude-sessions` requires `fzf`.** If it's missing, the script
   attempts to auto-install it via `brew` (macOS) or `apt-get` (Debian/
