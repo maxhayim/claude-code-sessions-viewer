@@ -78,6 +78,7 @@ FZF_BOX=(
   --input-border=rounded --input-label=" 🔍 Search " --input-label-pos=3
   --list-border=rounded --list-label-pos=3
   --prompt="❯ " --ghost="Type to search — no need to press anything first" --pointer="▶" --marker="✓"
+  --multi
   --bind="double-click:accept"
   --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,footer:#d97757"
 )
@@ -90,24 +91,33 @@ FZF_BOX=(
 NEW_SESSION_ROW=$(printf '\t\t\t__NEW_SESSION__\t\t\t%s+ Start New Session%s' "${BOLD}${ACCENT}" "$RESET")
 NEW_SESSION_ROW_Q=$(printf '%q' "$NEW_SESSION_ROW")
 
+# Two sort modes: alphabetical (default, dictionary-style letter dividers)
+# and most-recent-first (no dividers — they only make sense when rows are
+# actually grouped by starting letter, which date-sort isn't).
 LIST_CMD="{ printf '%s\\n' $NEW_SESSION_ROW_Q; python3 '$PLUGIN_SCRIPTS/list_sessions.py' --tsv --sort-by=session --grouped; }"
+LIST_CMD_DATE="{ printf '%s\\n' $NEW_SESSION_ROW_Q; python3 '$PLUGIN_SCRIPTS/list_sessions.py' --tsv --sort-by=date; }"
 
 # --- All sessions, every project, one list: every session shown by its
 # name (or first-message preview if never renamed), alphabetically, grouped
 # into dictionary-style letter sections (A, B, C, ...). Moving the selection
-# updates the preview pane with when it was last active, where it lives, and
-# the conversation itself. Enter/double-click opens it; right arrow opens an
-# Open/Delete action menu for the highlighted row (Spotlight-style) and
-# refreshes the list afterward in case it was deleted. -----------------------
+# updates the preview pane with when it was last active, where it lives, its
+# context-window usage, and the conversation itself. Enter/double-click
+# opens it; right arrow opens an Open/Rename/Delete action menu for the
+# highlighted row; Tab marks rows for ctrl-x bulk-delete; ctrl-r/ctrl-n
+# switch sort mode. Reloads the list afterward wherever a delete could have
+# happened. -------------------------------------------------------------
 SELECTED=$(eval "$LIST_CMD" | \
   fzf --ansi \
       --delimiter='\t' \
       --with-nth=7 \
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' '{6}' '{1}' '{3}'" \
       --preview-window=right:55%:wrap,border-rounded \
-      --footer="type to search  ·  ↑↓: navigate  ·  enter/double-click: open  ·  right arrow: open/rename/delete  ·  esc: cancel" \
+      --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · right arrow: open/rename/delete · esc: cancel" \
       --list-label=" All Sessions " \
       --bind="right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}')+reload($LIST_CMD)" \
+      --bind="ctrl-x:execute(bash '$PLUGIN_SCRIPTS/bulk_delete.sh' {+4} -- {+6})+reload($LIST_CMD)" \
+      --bind="ctrl-r:reload($LIST_CMD_DATE)" \
+      --bind="ctrl-n:reload($LIST_CMD)" \
       "${FZF_BOX[@]}")
 
 if [ -z "$SELECTED" ]; then
