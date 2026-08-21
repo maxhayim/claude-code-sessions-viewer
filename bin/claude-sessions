@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # claude-sessions — visual, fuzzy-searchable browser for every Claude Code
-# session on this machine. Right arrow shows a session's info (last
-# active, location, context usage) before you act on it. Selecting one
-# resumes it.
+# session on this machine. ctrl-o shows a session's info (last active,
+# location, context usage) before you act on it. Selecting one resumes it.
 #
 # Requires fzf: brew install fzf
 #
@@ -109,7 +108,7 @@ LIST_CMD_DATE="{ printf '%s\\n' $NEW_SESSION_ROW_Q; python3 '$PLUGIN_SCRIPTS/lis
 # name (or first-message preview if never renamed), alphabetically, grouped
 # into dictionary-style letter sections (A, B, C, ...). No live preview pane
 # here — that was a separate box fzf can never share a footer with (proven
-# structurally impossible, not a missing flag). Instead, right arrow opens
+# structurally impossible, not a missing flag). Instead, ctrl-o opens
 # an Open/Rename/Delete menu that shows the session's info (last active,
 # location, context usage) right there. Enter/double-click resumes
 # directly; Tab marks rows for ctrl-x bulk-delete; ctrl-r/ctrl-n switch
@@ -122,9 +121,9 @@ SELECTED=$(eval "$LIST_CMD" | \
       --with-nth=7 \
       --header="${ACCENT}${LOGO}${RESET}" \
       --header-first \
-      --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · right arrow: open/rename/delete · esc: cancel" \
+      --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · ctrl-o: open/rename/delete · esc: cancel" \
       --list-label=" All Sessions " \
-      --bind="right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}' '{1}')+reload($LIST_CMD)" \
+      --bind="ctrl-o:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}' '{1}')+reload($LIST_CMD)" \
       --bind="ctrl-x:execute(bash '$PLUGIN_SCRIPTS/bulk_delete.sh' {+4} -- {+6})+reload($LIST_CMD)" \
       --bind="ctrl-r:reload($LIST_CMD_DATE)" \
       --bind="ctrl-n:reload($LIST_CMD)" \
@@ -166,7 +165,7 @@ SESSION_JSONL_PATH=$(printf '%s' "$SELECTED" | cut -f6)
 
 # The list is a fresh scan each run, but a session can still vanish between
 # that scan and this exec — most commonly because it was just removed via
-# the right-arrow Delete action. Check for that explicitly and say so,
+# the ctrl-o menu's Delete action. Check for that explicitly and say so,
 # rather than letting `claude`'s raw "No conversation found" error surface
 # with no context.
 if [ ! -f "$SESSION_JSONL_PATH" ]; then
