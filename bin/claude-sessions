@@ -52,17 +52,22 @@ else
   RESET=""
 fi
 
-cat <<EOF
-${ACCENT}╭──────────────────────────────────────────╮
+# The logo used to be plain text printed before fzf launches — but that's
+# just static terminal output, and a tall fzf box growing beneath it could
+# scroll it out of view (or off-screen entirely on a short terminal), with
+# no way to get it back short of restarting. Building it as fzf's own
+# --header instead makes it part of fzf's live-managed box: fzf redraws
+# its header on every frame, so it can never scroll away or be lost for
+# as long as the picker is open.
+LOGO="╭──────────────────────────────────────────╮
 │                                          │
 │   ┌─┐┌─┐┌─┐┬  ┬                          │
 │   │  │  └─┐└┐┌┘                          │
 │   └─┘└─┘└─┘ └┘   Claude Code             │
 │                       Sessions Viewer    │
 │                                          │
-╰──────────────────────────────────────────╯${RESET}
-
-EOF
+╰──────────────────────────────────────────╯
+"
 
 # Shared look: a large, mostly-full-terminal box (not a small centered
 # tile) so long project/session names don't get clipped, with Search as
@@ -70,8 +75,7 @@ EOF
 # is purely visual — in fzf, typing always filters the list immediately
 # from anywhere, with no "focus" to navigate into; you never need to press
 # Up to reach the search box before typing works.) Left headroom (85% vs.
-# a near-full 92%) so the banner above isn't at risk of being scrolled out
-# of view by the box growing beneath it.
+# a near-full 92%) so there's room for the header (logo) above the list.
 # shellcheck disable=SC2054  # commas below are fzf --color value syntax, not array-element separators
 FZF_BOX=(
   --height=85% --margin=2%,4% --padding=1
@@ -113,6 +117,7 @@ SELECTED=$(eval "$LIST_CMD" | \
       --with-nth=7 \
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' '{6}' '{1}' '{3}'" \
       --preview-window=right:55%:wrap,border-rounded \
+      --header="${ACCENT}${LOGO}${RESET}" \
       --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · right arrow: open/rename/delete · esc: cancel" \
       --list-label=" All Sessions " \
       --bind="right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}')+reload($LIST_CMD)" \
