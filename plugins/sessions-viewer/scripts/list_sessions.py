@@ -116,7 +116,17 @@ def gather_sessions():
                     "turns": count_lines(jsonl_file),
                 }
             )
-    sessions.sort(key=lambda s: s["mtime"], reverse=True)
+    return sessions
+
+
+def sort_sessions(sessions, sort_by):
+    if sort_by == "date":
+        sessions.sort(key=lambda s: s["mtime"], reverse=True)
+    else:
+        # Alphabetical by project name first (so same-project sessions stay
+        # grouped together in print_human instead of interleaving by date),
+        # most-recent session first within each project.
+        sessions.sort(key=lambda s: (s["project_name"].lower(), s["project"].lower(), -s["mtime"]))
     return sessions
 
 
@@ -152,7 +162,8 @@ def main():
         print(f"No Claude Code project history found at {PROJECTS_DIR}")
         sys.exit(0)
 
-    sessions = gather_sessions()
+    sort_by = "date" if "--sort-by=date" in sys.argv else "name"
+    sessions = sort_sessions(gather_sessions(), sort_by)
 
     if "--tsv" in sys.argv:
         print_tsv(sessions)

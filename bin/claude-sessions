@@ -40,14 +40,47 @@ if ! command -v fzf >/dev/null 2>&1; then
   exit 1
 fi
 
+# Claude's brand accent color (#d97757), as a 24-bit ANSI escape. Skipped
+# for non-interactive terminals or when NO_COLOR is set.
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  ACCENT=$'\033[38;2;217;119;87m'
+  RESET=$'\033[0m'
+else
+  ACCENT=""
+  RESET=""
+fi
+
+cat <<EOF
+${ACCENT}   ╭──────────────────────────────────────╮
+   │                                        │
+   │   ┌─┐┌─┐┌─┐┬  ┬                        │
+   │   │  ├─┘└─┐└┐┌┘                        │
+   │   └─┘┴  └─┘ └┘   sessions viewer       │
+   │                                        │
+   │   for Claude Code                      │
+   │                                        │
+   ╰──────────────────────────────────────╯${RESET}
+
+EOF
+
 SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv | \
   fzf --delimiter='\t' \
       --with-nth=1,2,3,5 \
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' {6}" \
-      --preview-window=right:60%:wrap \
-      --header="Claude Code Sessions — enter/double-click: resume · esc: cancel" \
+      --preview-window=right:60%:wrap,border-rounded \
+      --layout=reverse \
+      --info=inline \
+      --header="enter/double-click: resume  ·  ctrl-n: sort by name  ·  ctrl-d: sort by date  ·  esc: cancel" \
       --bind="double-click:accept" \
-      --prompt="session> ")
+      --bind="ctrl-n:reload(python3 '$PLUGIN_SCRIPTS/list_sessions.py' --tsv --sort-by=name)" \
+      --bind="ctrl-d:reload(python3 '$PLUGIN_SCRIPTS/list_sessions.py' --tsv --sort-by=date)" \
+      --prompt="Search ❯ " \
+      --pointer="▶" \
+      --marker="✓" \
+      --border=rounded \
+      --border-label=" Claude Code Sessions " \
+      --border-label-pos=3 \
+      --color="pointer:#d97757,prompt:#d97757,marker:#d97757,border:#d97757,label:#d97757,header:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold")
 
 if [ -z "$SELECTED" ]; then
   echo "No session selected."
