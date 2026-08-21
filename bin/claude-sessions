@@ -78,20 +78,14 @@ FZF_BOX=(
   --color="pointer:#d97757,prompt:#d97757,marker:#d97757,border:#d97757,label:#d97757,header:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold"
 )
 
-# --- Pick a project. Enter/double-click jumps straight into its latest
-# session; ctrl-o instead opens the full session list for that project so
-# you can pick an older one. ---------------------------------------------
-RESULT=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --projects-tsv | \
+# --- Step 1: pick a project, alphabetically, up front. ---------------------
+PROJECT_SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --projects-tsv | \
   fzf --delimiter='\t' \
       --preview="python3 '$PLUGIN_SCRIPTS/list_sessions.py' --project-preview='{1}'" \
       --preview-window=down:50%:wrap,border-rounded \
-      --header="enter/double-click: resume latest  ·  ctrl-o: pick a different session  ·  esc: cancel" \
+      --header="enter/double-click: see sessions  ·  esc: cancel" \
       --border-label=" Project Names: " \
-      --expect=ctrl-o \
       "${FZF_BOX[@]}")
-
-KEY=$(printf '%s\n' "$RESULT" | head -n1)
-PROJECT_SELECTED=$(printf '%s\n' "$RESULT" | tail -n +2)
 
 if [ -z "$PROJECT_SELECTED" ]; then
   echo "No project selected."
@@ -100,20 +94,16 @@ fi
 
 PROJECT_NAME=$(printf '%s' "$PROJECT_SELECTED" | cut -f1)
 
-if [ "$KEY" = "ctrl-o" ]; then
-  # --- Secondary menu: every session in this project, most recent first ---
-  SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=date --project="$PROJECT_NAME" | \
-    fzf --delimiter='\t' \
-        --with-nth=1,5 \
-        --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' {6}" \
-        --preview-window=right:60%:wrap,border-rounded \
-        --header="enter/double-click: resume  ·  esc: cancel" \
-        --border-label=" Sessions: $PROJECT_NAME " \
-        "${FZF_BOX[@]}")
-else
-  # --- Default: the single latest session for this project ---
-  SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=date --project="$PROJECT_NAME" | head -n1)
-fi
+# --- Step 2: a new box with that project's sessions ("more info"); pick one
+# and open it. ---------------------------------------------------------------
+SELECTED=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=date --project="$PROJECT_NAME" | \
+  fzf --delimiter='\t' \
+      --with-nth=1,5 \
+      --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' {6}" \
+      --preview-window=right:60%:wrap,border-rounded \
+      --header="enter/double-click: open  ·  esc: cancel" \
+      --border-label=" Sessions: $PROJECT_NAME " \
+      "${FZF_BOX[@]}")
 
 if [ -z "$SELECTED" ]; then
   echo "No session selected."
