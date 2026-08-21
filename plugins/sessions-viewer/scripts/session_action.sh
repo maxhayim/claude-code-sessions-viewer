@@ -31,7 +31,8 @@ ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,border:#d97757"
 # of treating Esc the same as picking "Back"/"Cancel".
 ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
   --height=~30% --layout=reverse --border=rounded \
-  --header="$DISPLAY_NAME" --prompt="Action ❯ " \
+  --header="$DISPLAY_NAME"$'\n''↑↓: navigate  ·  enter: select  ·  esc: back' \
+  --prompt="Action ❯ " \
   --color="$ACCENT_COLOR") || true
 
 case "$ACTION" in
@@ -53,7 +54,8 @@ case "$ACTION" in
   Delete)
     CONFIRM=$(printf 'Cancel\nYes, delete\n' | fzf \
       --height=~30% --layout=reverse --border=rounded \
-      --header="Delete: $DISPLAY_NAME" --prompt="Confirm ❯ " \
+      --header="Delete: $DISPLAY_NAME"$'\n''↑↓: navigate  ·  enter: select  ·  esc: cancel' \
+      --prompt="Confirm ❯ " \
       --color="$ACCENT_COLOR") || true
     if [ "$CONFIRM" = "Yes, delete" ]; then
       rm -f -- "$JSONL_PATH"

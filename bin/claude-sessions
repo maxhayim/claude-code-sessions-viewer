@@ -96,7 +96,7 @@ SELECTED=$(eval "$LIST_CMD" | \
       --with-nth=7 \
       --preview="python3 '$PLUGIN_SCRIPTS/preview_session.py' '{6}' '{1}' '{3}'" \
       --preview-window=right:55%:wrap,border-rounded \
-      --header="enter/double-click: open  ·  right arrow: open/rename/delete  ·  esc: cancel" \
+      --header="↑↓: navigate  ·  enter/double-click: open  ·  right arrow: open/rename/delete  ·  esc: cancel" \
       --list-label=" All Sessions " \
       --bind="right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}')+reload($LIST_CMD)" \
       "${FZF_BOX[@]}")
