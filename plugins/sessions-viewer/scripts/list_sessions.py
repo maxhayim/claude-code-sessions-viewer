@@ -287,20 +287,32 @@ def print_project_preview(sessions, project_name):
 
 
 def print_human(sessions):
+    """Plain-text version of the same flat, alphabetical, dictionary-style
+    view bin/claude-sessions shows: every session by its real name (its
+    /rename title, or its first-message preview), letter-grouped, not
+    nested under a per-project menu."""
     if not sessions:
         print("No session files found.")
         return
 
-    print(f"Found {len(sessions)} Claude Code session(s) across "
-          f"{len({s['project'] for s in sessions})} project location(s).\n")
+    color = "" if os.environ.get("NO_COLOR") else "\033[1;38;2;217;119;87m"
+    reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
 
-    current_project = None
-    for s in sessions:
-        if s["project"] != current_project:
-            current_project = s["project"]
-            print(f"\n== {s['project_name']}  ({current_project}) ==")
+    ordered = sorted(sessions, key=lambda s: (s["name"] or s["preview"]).lower())
+
+    print(f"{len(ordered)} Claude Code session(s), sorted alphabetically by name.")
+
+    current_letter = None
+    for s in ordered:
+        display = s["name"] or s["preview"]
+        letter = display[0].upper() if display else "#"
+        if not letter.isalpha():
+            letter = "#"
+        if letter != current_letter:
+            current_letter = letter
+            print(f"\n{color}§ {letter}{reset}")
         when = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
-        print(f"  [{when}] {s['session_id'][:8]}  ({s['turns']} lines)  {s['preview']}")
+        print(f"  [{when}] {s['session_id'][:8]}  ({s['project_name']})  {display}")
 
 
 def get_arg_value(prefix):
