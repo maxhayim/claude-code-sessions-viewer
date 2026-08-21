@@ -10,7 +10,16 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks (e.g. `ln -s .../bin/claude-sessions /usr/local/bin/...`,
+# or a Homebrew-installed symlink) so PLUGIN_SCRIPTS below points at the
+# real script directory rather than wherever the symlink lives.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 PLUGIN_SCRIPTS="$SCRIPT_DIR/../plugins/sessions-viewer/scripts"
 
 if ! command -v fzf >/dev/null 2>&1; then
