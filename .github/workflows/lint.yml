@@ -1,0 +1,34 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Python syntax check
+        run: |
+          python -m py_compile plugins/sessions-viewer/scripts/list_sessions.py
+          python -m py_compile plugins/sessions-viewer/scripts/preview_session.py
+
+      - name: Shellcheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './bin'
+
+      - name: Validate marketplace.json
+        run: python -m json.tool .claude-plugin/marketplace.json > /dev/null
+
+      - name: Validate plugin.json
+        run: python -m json.tool plugins/sessions-viewer/.claude-plugin/plugin.json > /dev/null
