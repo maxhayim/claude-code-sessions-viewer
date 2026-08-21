@@ -9,6 +9,11 @@
 
 set -euo pipefail
 
+# Any unexpected failure under `set -e` would otherwise kill this script
+# silently — the right-arrow menu would just seem to do nothing at all,
+# with no way to tell why. Make that visible instead.
+trap 'echo "session_action.sh: unexpected error (line $LINENO)" >&2; read -r -p "Press enter to continue..." _' ERR
+
 SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 SESSION_ID="${1:-}"
@@ -32,7 +37,7 @@ ACCENT_COLOR="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d977
 # never share a footer with); this is where that info actually lives now —
 # a static header showing this one session's last-active date, location,
 # and context usage, computed once before opening the menu.
-INFO=$(python3 "$SCRIPT_DIR/preview_session.py" "$JSONL_PATH" "$LAST_ACTIVE" "$CD_PATH" --metadata-only)
+INFO=$(python3 "$SCRIPT_DIR/preview_session.py" "$JSONL_PATH" "$LAST_ACTIVE" "$CD_PATH" --metadata-only) || INFO=""
 
 # `|| true` on each fzf call below is load-bearing: fzf exits non-zero on
 # Esc/no-selection, which under `set -e` would otherwise kill this script
