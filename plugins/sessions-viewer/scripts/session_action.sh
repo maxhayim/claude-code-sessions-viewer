@@ -10,7 +10,7 @@
 set -euo pipefail
 
 # Any unexpected failure under `set -e` would otherwise kill this script
-# silently — the right-arrow menu would just seem to do nothing at all,
+# silently — the ctrl-o menu would just seem to do nothing at all,
 # with no way to tell why. Make that visible instead.
 trap 'echo "session_action.sh: unexpected error (line $LINENO)" >&2; read -r -p "Press enter to continue..." _' ERR
 

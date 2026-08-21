@@ -14,13 +14,13 @@
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey)](#requirements)
-[![Release](https://img.shields.io/badge/Release-v1.1.0-blue)](https://github.com/maxhayim/claude-code-sessions-viewer/releases/tag/v1.1.0)
+[![Release](https://img.shields.io/badge/Release-v1.1.5-blue)](https://github.com/maxhayim/claude-code-sessions-viewer/releases/tag/v1.1.5)
 
 > **Unofficial, community-built project. Not affiliated with, endorsed by,
 > or sponsored by Anthropic.** "[Claude Code](https://github.com/anthropics/claude-code)" refers to Anthropic's product;
 > this tool simply reads its local session files.
 
-> **Status: v1.1.0.** Verified end-to-end against real
+> **Status: v1.1.5.** Verified end-to-end against real
 > `~/.claude/projects/` data, including the Homebrew install path. See
 > [Known Limitations](#known-limitations) for what's still untested (multi-
 > machine coverage, Windows).
@@ -36,8 +36,9 @@ no real preview. This project adds two things on top:
 - **`/list-sessions`** — a plain-text listing you run inside a Claude Code
   session, grouped by project, most recent first.
 - **`bin/claude-sessions`** — a standalone, `fzf`-powered visual browser:
-  fuzzy search, arrow-key navigation, a live conversation preview pane, and
-  an Open/Rename/Delete action menu for every session.
+  fuzzy search, arrow-key navigation, per-row context-usage indicators, and
+  a `ctrl-o` Open/Rename/Delete/Back menu (showing that session's info)
+  for every session.
 
 ## Features
 
@@ -57,12 +58,15 @@ no real preview. This project adds two things on top:
   `cwd` field, rather than guessing from the encoded folder name (Claude
   Code encodes both `/` and spaces as `-`, which makes folder-name decoding
   ambiguous — see [Known Limitations](#known-limitations))
-- Visual browser (`bin/claude-sessions`) adds fuzzy search, a live
-  conversation preview pane (shows when the session was last active,
-  where it lives, and the conversation itself), and:
-  - **Enter / double-click** — resume the session
-  - **Right arrow** — an Open / Rename / Delete action menu for the
-    highlighted session, all keyboard-navigable
+- Visual browser (`bin/claude-sessions`) adds fuzzy search and:
+  - **Enter / double-click** — resume the session directly
+  - **`ctrl-o`** — an Open / Rename / Delete / Back menu for the
+    highlighted session, showing its last-active date, location, and
+    context-window usage before you act on it
+  - **Tab + `ctrl-x`** — mark several sessions and bulk-delete them in one
+    confirm step
+  - **`ctrl-r` / `ctrl-n`** — switch between most-recent-first and
+    alphabetical sort, live
   - **A pinned "+ Start New Session" entry** at the top of the list —
     prompts for a name and launches a new, already-named session
 - No network calls, no credentials, reads only local files — see
@@ -127,26 +131,31 @@ ln -s "$(pwd)/bin/claude-sessions" /usr/local/bin/claude-sessions
 ## Usage
 
 Inside the visual browser, everything is keyboard-driven — arrow keys +
-Enter, no mouse needed (double-click also works if you prefer it):
+Enter, no mouse needed (double-click also works if you prefer it). There's
+no separate preview pane: `ctrl-o`'s menu shows a session's info right
+where you're about to act on it, so a single footer at the bottom of the
+box can genuinely span everything above it.
 
 - **Type anything** to fuzzy-search across all session names/previews — the
   search box is always live, no need to navigate to it first
 - **↑ / ↓** to move through the list; sessions are grouped into
-  dictionary-style letter sections (`§ A`, `§ B`, ...)
-- The right-hand pane live-previews when the session was last active,
-  where it lives, its context-window usage, and the conversation itself,
-  with orange page-break dividers between each section (this pane sits
-  beside the list, not below it — so the footer's keyboard instructions
-  apply to the Search/All Sessions column specifically, not the preview)
-- **Enter / double-click** resumes the highlighted session (`cd`s into its
-  project directory, then runs `claude --resume <id>`)
-- **Right arrow** opens an action menu for the highlighted session:
+  dictionary-style letter sections (`§ A`, `§ B`, ...), each showing a
+  compact context-usage indicator like `[72K/200K]`
+- **Enter / double-click** resumes the highlighted session directly (`cd`s
+  into its project directory, then runs `claude --resume <id>`)
+- **`ctrl-o`** opens an action menu for the highlighted session, showing
+  its last-active date, location, and context usage first:
   - **Open** — same as Enter
   - **Rename** — prompts for a new name and applies it via `/rename`
   - **Delete** — permanently removes that session's transcript file, after
     a confirmation step (no undo — see
     [Known Limitations](#known-limitations))
   - **Back** — closes the menu, no change
+- **Tab** marks one or more sessions; **`ctrl-x`** bulk-deletes everything
+  marked (or just the highlighted one if nothing's marked) after one
+  confirm step
+- **`ctrl-r`** / **`ctrl-n`** switch the list between most-recent-first and
+  alphabetical, live
 - **+ Start New Session**, pinned at the very top of the list — prompts for
   a name, then launches a fresh `claude` session already named that
 - **Esc** cancels/backs out at any screen
@@ -171,7 +180,7 @@ live preview command (`bin/claude-sessions`).
 
 ## Known Limitations
 
-- **Delete has no undo.** The right-arrow menu's Delete action (after
+- **Delete has no undo.** The ctrl-o menu's Delete action (after
   confirmation) permanently removes that session's `.jsonl` transcript
   file from disk. There's no trash/recovery — it's gone.
 - **Rename and new-session naming rely on an unverified assumption**: that
