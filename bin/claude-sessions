@@ -85,7 +85,8 @@ FZF_BOX=(
   --prompt="❯ " --ghost="Type to search — no need to press anything first" --pointer="▶" --marker="✓"
   --multi
   --bind="double-click:accept"
-  --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,footer:#d97757,border:#d97757,preview-border:#d97757,info:#d97757,separator:#d97757,scrollbar:#d97757,preview-scrollbar:#d97757,spinner:#d97757"
+  --footer-border=rounded
+  --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,footer:#d97757,footer-border:#d97757,border:#d97757,preview-border:#d97757,info:#d97757,separator:#d97757,scrollbar:#d97757,preview-scrollbar:#d97757,spinner:#d97757"
 )
 
 # A pinned row at the very top for starting a fresh session, ahead of the
