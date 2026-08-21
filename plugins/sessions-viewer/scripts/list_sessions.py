@@ -77,6 +77,31 @@ def extract_cwd(jsonl_path: Path, max_lines=20):
     return None
 
 
+def session_name(jsonl_path: Path):
+    """The custom title set via Claude Code's /rename command, if any (the
+    most recent one, if renamed more than once). A rename can happen
+    anywhere in a session, so this scans the whole file rather than just
+    the first few lines — cheaply, via a substring check before parsing."""
+    name = None
+    try:
+        with jsonl_path.open("r", errors="ignore") as f:
+            for line in f:
+                if '"type":"agent-name"' not in line and '"type": "agent-name"' not in line:
+                    continue
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if obj.get("type") == "agent-name" and obj.get("agentName"):
+                    name = obj["agentName"]
+    except OSError:
+        pass
+    return name
+
+
 def first_user_message(jsonl_path: Path, max_lines=20):
     """Pull the first human message text as a preview, scanning a bounded
     number of lines so huge sessions don't slow things down."""
@@ -145,6 +170,7 @@ def gather_sessions():
                     "mtime": mtime,
                     "preview": first_user_message(jsonl_file),
                     "turns": count_lines(jsonl_file),
+                    "name": session_name(jsonl_file),
                 }
             )
     return sessions
@@ -153,6 +179,11 @@ def gather_sessions():
 def sort_sessions(sessions, sort_by):
     if sort_by == "date":
         sessions.sort(key=lambda s: s["mtime"], reverse=True)
+    elif sort_by == "session":
+        # Alphabetical by the session's own display text (its /rename name
+        # if it has one, else its first-message preview) — used for the
+        # session list within an already-chosen project.
+        sessions.sort(key=lambda s: (s["name"] or s["preview"]).lower())
     else:
         # Alphabetical by project name first (so same-project sessions stay
         # grouped together in print_human instead of interleaving by date),
@@ -163,12 +194,14 @@ def sort_sessions(sessions, sort_by):
 
 def print_tsv(sessions):
     """Machine-readable output for the fzf-powered browser (bin/claude-sessions).
-    Columns: date | project_name | location | session_id | preview | path
-    (with-nth in the caller hides session_id and path from the display)."""
+    Columns: date | project_name | location | session_id | preview | path |
+    display (the /rename name if the session has one, else the preview
+    text — what the picker actually shows for each row)."""
     for s in sessions:
         when = datetime.fromtimestamp(s["mtime"]).strftime("%Y-%m-%d %H:%M")
         preview = s["preview"].replace("\t", " ")
-        print(f"{when}\t{s['project_name']}\t{s['project']}\t{s['session_id']}\t{preview}\t{s['path']}")
+        display = (s["name"] or s["preview"]).replace("\t", " ")
+        print(f"{when}\t{s['project_name']}\t{s['project']}\t{s['session_id']}\t{preview}\t{s['path']}\t{display}")
 
 
 DIVIDER_MARK = "§"  # prefixes letter-group header rows so bin/claude-sessions
@@ -256,7 +289,7 @@ def main():
         print_projects_tsv(sessions)
         return
 
-    sort_by = "date" if "--sort-by=date" in sys.argv else "name"
+    sort_by = get_arg_value("--sort-by=") or "name"
     sessions = sort_sessions(sessions, sort_by)
 
     project_filter = get_arg_value("--project=")
