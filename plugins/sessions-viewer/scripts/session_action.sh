@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Right-arrow action menu for a highlighted row in bin/claude-sessions:
-# offers Open (resume) or Delete for that one session. Invoked by fzf's
-# execute() bind, so it runs with the parent fzf temporarily suspended and
-# full terminal control handed to it.
+# Open / Rename / Delete / Back for that one session, navigated the same
+# way as the main list — arrow keys + Enter, no mouse needed. Invoked by
+# fzf's execute() bind, so it runs with the parent fzf temporarily
+# suspended and full terminal control handed to it.
 #
 # Usage: session_action.sh <session_id> <jsonl_path> <cd_path> <display_name>
 
@@ -24,7 +25,7 @@ esac
 
 ACCENT_COLOR="pointer:#d97757,prompt:#d97757,header:#d97757,border:#d97757"
 
-ACTION=$(printf 'Open\nDelete\n' | fzf \
+ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | fzf \
   --height=~30% --layout=reverse --border=rounded \
   --header="$DISPLAY_NAME" --prompt="Action ❯ " \
   --color="$ACCENT_COLOR")
@@ -38,6 +39,13 @@ case "$ACTION" in
     fi
     (cd "$CD_PATH" && claude --resume "$SESSION_ID")
     ;;
+  Rename)
+    printf 'New name: '
+    read -r NEW_NAME
+    if [ -n "$NEW_NAME" ]; then
+      claude --resume "$SESSION_ID" "/rename $NEW_NAME"
+    fi
+    ;;
   Delete)
     CONFIRM=$(printf 'Cancel\nYes, delete\n' | fzf \
       --height=~30% --layout=reverse --border=rounded \
@@ -46,5 +54,8 @@ case "$ACTION" in
     if [ "$CONFIRM" = "Yes, delete" ]; then
       rm -f -- "$JSONL_PATH"
     fi
+    ;;
+  *)
+    # Back, Esc, or any other cancel — do nothing and return to the list.
     ;;
 esac
