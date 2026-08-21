@@ -70,8 +70,10 @@ def extract_text(content):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("No session path given.")
+    if len(sys.argv) < 2 or not sys.argv[1]:
+        # Empty path — e.g. the pinned "+ Start New Session" row or a
+        # letter divider, neither of which have a real session behind them.
+        print("Select a session to preview it here.")
         return
 
     path = sys.argv[1]
