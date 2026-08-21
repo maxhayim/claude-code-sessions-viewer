@@ -125,6 +125,17 @@ if [ "$SESSION_ID" = "__NEW_SESSION__" ]; then
 fi
 
 SESSION_PROJECT_PATH=$(printf '%s' "$SELECTED" | cut -f3)
+SESSION_JSONL_PATH=$(printf '%s' "$SELECTED" | cut -f6)
+
+# The list is a fresh scan each run, but a session can still vanish between
+# that scan and this exec — most commonly because it was just removed via
+# the right-arrow Delete action. Check for that explicitly and say so,
+# rather than letting `claude`'s raw "No conversation found" error surface
+# with no context.
+if [ ! -f "$SESSION_JSONL_PATH" ]; then
+  echo "This session no longer exists (it may have been deleted)." >&2
+  exit 1
+fi
 
 if [ ! -d "$SESSION_PROJECT_PATH" ]; then
   echo "Project directory no longer exists: $SESSION_PROJECT_PATH" >&2
