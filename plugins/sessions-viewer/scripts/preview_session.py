@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """
-Print a readable preview of a Claude Code session transcript for the fzf
-preview pane. Usage: preview_session.py <path-to-jsonl> [last-active] [location] [--metadata-only]
+Print info about a Claude Code session transcript, for bin/claude-sessions'
+Open/Rename/Delete/Back menu — which shows this in two separate boxes:
+a small metadata header, and a taller conversation-preview pane.
 
---metadata-only prints just the Last session/Location/Context/session_id
-block (no keyboard hint, no conversation) — used by session_action.sh to
-show a session's info as a static header in its Open/Rename/Delete menu.
+Usage:
+  preview_session.py <path-to-jsonl> [last-active] [location]
+      Metadata block only (last active, location, context usage,
+      session_id) — used as the menu's --header.
+  preview_session.py <path-to-jsonl> --conversation
+      Conversation preview only — used as the menu's --preview.
 """
 import json
 import os
 import sys
 
-MAX_MESSAGES = 12
+MAX_MESSAGES = 20
 MAX_CHARS_PER_MSG = 300
 
 # Claude's standard context window. Some accounts/models have access to a
@@ -73,32 +77,7 @@ def extract_text(content):
     return ""
 
 
-def main():
-    if len(sys.argv) < 2 or not sys.argv[1]:
-        # Empty path — e.g. the pinned "+ Start New Session" row or a
-        # letter divider, neither of which have a real session behind them.
-        print("Select a session to preview it here.")
-        return
-
-    args = [a for a in sys.argv[1:] if a != "--metadata-only"]
-    metadata_only = "--metadata-only" in sys.argv
-
-    path = args[0] if len(args) > 0 else ""
-    last_active = args[1] if len(args) > 1 else None
-    location = args[2] if len(args) > 2 else None
-
-    accent = "" if os.environ.get("NO_COLOR") else "\033[38;2;217;119;87m"
-    reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
-    divider = f"{accent}{'─' * 40}{reset}"
-
-    if not metadata_only:
-        # fzf's --footer is structurally tied to the Search/list column and
-        # cannot reach this preview pane in any layout — so the only way to
-        # show keyboard hints "with" the preview is to print them as part
-        # of its own content, here.
-        print(f"{accent}enter/double-click: open  ·  right arrow: open/rename/delete{reset}")
-        print(divider)
-
+def print_metadata(path, last_active, location):
     if last_active:
         print(f"Last session: {last_active}")
     if location:
@@ -116,10 +95,11 @@ def main():
     if last_active or location:
         print(f"session_id: {os.path.splitext(os.path.basename(path))[0]}")
 
-    if metadata_only:
-        return
 
-    print(divider)
+def print_conversation(path):
+    accent = "" if os.environ.get("NO_COLOR") else "\033[38;2;217;119;87m"
+    reset = "" if os.environ.get("NO_COLOR") else "\033[0m"
+    divider = f"{accent}{'─' * 40}{reset}"
 
     shown = 0
     try:
@@ -142,6 +122,13 @@ def main():
                 text = extract_text(msg.get("content")).strip().replace("\n", " ")
                 if not text:
                     continue
+                # Skip synthetic messages injected by slash commands like
+                # /resume (caveat/command-name/stdout wrappers, and
+                # Claude's "no response" ack) — noise, not conversation.
+                if text.startswith("<local-command-") or text.startswith("<command-"):
+                    continue
+                if text.startswith("No response requested"):
+                    continue
                 text = text[:MAX_CHARS_PER_MSG]
                 label = "You" if role == "user" else "Claude"
                 print(f"[{label}] {text}")
@@ -149,6 +136,29 @@ def main():
                 shown += 1
     except OSError as e:
         print(f"Could not read session: {e}")
+
+    if shown == 0:
+        print("(no conversation content found)")
+
+
+def main():
+    if len(sys.argv) < 2 or not sys.argv[1]:
+        # Empty path — e.g. the pinned "+ Start New Session" row or a
+        # letter divider, neither of which have a real session behind them.
+        print("Select a session to see its info.")
+        return
+
+    conversation_mode = "--conversation" in sys.argv
+    args = [a for a in sys.argv[1:] if a != "--conversation"]
+    path = args[0]
+
+    if conversation_mode:
+        print_conversation(path)
+        return
+
+    last_active = args[1] if len(args) > 1 else None
+    location = args[2] if len(args) > 2 else None
+    print_metadata(path, last_active, location)
 
 
 if __name__ == "__main__":

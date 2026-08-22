@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # claude-sessions — visual, fuzzy-searchable browser for every Claude Code
-# session on this machine. ctrl-o (or right-click) shows a session's info (last active,
-# location, context usage) before you act on it. Selecting one resumes it.
+# session on this machine. Selecting one shows an Open/Rename/Delete/Back
+# menu with that session's info; Open resumes it.
 #
 # Requires fzf: brew install fzf
 #
@@ -70,13 +70,18 @@ LOGO="╭───────────────────────�
 ╰──────────────────────────────────────────╯
 "
 
-# Shared look: a large, mostly-full-terminal box (not a small centered
-# tile) so long project/session names don't get clipped, with Search as
-# its own separate bordered box above the results list. (Note: this split
-# is purely visual — in fzf, typing always filters the list immediately
-# from anywhere, with no "focus" to navigate into; you never need to press
-# Up to reach the search box before typing works.) Left headroom (85% vs.
-# a near-full 92%) so there's room for the header (logo) above the list.
+# Shared look: a large, mostly-full-terminal box, with Search as its own
+# separate bordered box above the results list. (This split is purely
+# visual — in fzf, typing always filters the list immediately from
+# anywhere, with no "focus" to navigate into.) Deliberately no --multi, no
+# --bind execute()/reload() anywhere in this file: every custom bind using
+# those actions was reported to silently do nothing in at least one real
+# terminal, while plain accept (the default for Enter, and what
+# double-click is explicitly bound to below) reliably works. So the whole
+# Open/Rename/Delete/Back flow below is built entirely out of chained,
+# fresh fzf calls using only that one proven-reliable mechanism, with all
+# the "what happens next" logic living in this script instead of in fzf's
+# own bind system.
 # shellcheck disable=SC2054  # commas below are fzf --color value syntax, not array-element separators
 FZF_BOX=(
   --height=85% --margin=2%,4% --padding=1
@@ -84,99 +89,126 @@ FZF_BOX=(
   --input-border=rounded --input-label=" 🔍 Search " --input-label-pos=3
   --list-border=rounded --list-label-pos=3
   --prompt="❯ " --ghost="Type to search — no need to press anything first" --pointer="▶" --marker="✓"
-  --multi --track
   --bind="double-click:accept"
   --footer-border=rounded
   --color="pointer:#d97757,prompt:#d97757,marker:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,footer:#d97757,footer-border:#d97757,border:#d97757,info:#d97757,separator:#d97757,scrollbar:#d97757,spinner:#d97757"
 )
 
-# A pinned row at the very top for starting a fresh session, ahead of the
-# alphabetical list. Uses the same 7-tab-field shape as real rows so the
-# same cut -fN extraction works; session_id is a sentinel no real UUID can
-# match. Quoted with %q so it can be safely re-embedded, byte-for-byte, in
-# the reload command below (which needs to reconstruct it after a delete).
 NEW_SESSION_ROW=$(printf '\t\t\t__NEW_SESSION__\t\t\t%s+ Start New Session%s' "${BOLD}${ACCENT}" "$RESET")
-NEW_SESSION_ROW_Q=$(printf '%q' "$NEW_SESSION_ROW")
+TOGGLE_SORT_ROW=$(printf '\t\t\t__TOGGLE_SORT__\t\t\t%s↕ Toggle Sort%s' "${BOLD}${ACCENT}" "$RESET")
 
-# Two sort modes: alphabetical (default, dictionary-style letter dividers)
-# and most-recent-first (no dividers — they only make sense when rows are
-# actually grouped by starting letter, which date-sort isn't).
-LIST_CMD="{ printf '%s\\n' $NEW_SESSION_ROW_Q; python3 '$PLUGIN_SCRIPTS/list_sessions.py' --tsv --sort-by=session --grouped; }"
-LIST_CMD_DATE="{ printf '%s\\n' $NEW_SESSION_ROW_Q; python3 '$PLUGIN_SCRIPTS/list_sessions.py' --tsv --sort-by=date; }"
+SORT_MODE="session"
 
-# --- All sessions, every project, one list: every session shown by its
-# name (or first-message preview if never renamed), alphabetically, grouped
-# into dictionary-style letter sections (A, B, C, ...). No live preview pane
-# here — that was a separate box fzf can never share a footer with (proven
-# structurally impossible, not a missing flag). Instead, ctrl-o or right-click opens
-# an Open/Rename/Delete menu that shows the session's info (last active,
-# location, context usage) right there. Enter/double-click resumes
-# directly; Tab marks rows for ctrl-x bulk-delete; ctrl-r/ctrl-n switch
-# sort mode. This way the single remaining box (Search + All Sessions) has
-# one footer that genuinely spans everything, with nothing left over for
-# it to not cover. --------------------------------------------------------
-SELECTED=$(eval "$LIST_CMD" | \
-  fzf --ansi \
-      --delimiter='\t' \
-      --with-nth=7 \
-      --header="${ACCENT}${LOGO}${RESET}" \
-      --header-first \
-      --footer="type to search · tab: mark · ctrl-x: delete marked · ctrl-r: recent · ctrl-n: a-z · right arrow/ctrl-o/right-click: open/rename/delete · esc: cancel" \
-      --list-label=" All Sessions " \
-      --bind="ctrl-o,right-click,right:execute(bash '$PLUGIN_SCRIPTS/session_action.sh' '{4}' '{6}' '{3}' '{7}' '{1}')+reload($LIST_CMD)" \
-      --bind="ctrl-x:execute(bash '$PLUGIN_SCRIPTS/bulk_delete.sh' {+4} -- {+6})+reload($LIST_CMD)" \
-      --bind="ctrl-r:reload($LIST_CMD_DATE)" \
-      --bind="ctrl-n:reload($LIST_CMD)" \
-      "${FZF_BOX[@]}")
-
-if [ -z "$SELECTED" ]; then
-  echo "No session selected."
-  exit 0
-fi
-
-# --multi means Enter on several Tab-marked rows returns all of them at
-# once, which would silently corrupt every single-session cut -fN below.
-# Refuse to guess which one to open — bulk actions belong to ctrl-x.
-if [ "$(printf '%s\n' "$SELECTED" | wc -l)" -gt 1 ]; then
-  echo "Multiple sessions marked — press ctrl-x to bulk-delete them, or unmark (Tab) all but one and press Enter to open it." >&2
-  exit 1
-fi
-
-SESSION_ID=$(printf '%s' "$SELECTED" | cut -f4)
-
-# Letter-divider rows are unselectable in spirit — if one somehow gets
-# accepted (e.g. a stray Enter), treat it the same as no selection.
-case "$(printf '%s' "$SELECTED" | cut -f7)" in
-  *§*) echo "No session selected."; exit 0 ;;
-esac
-
-if [ "$SESSION_ID" = "__NEW_SESSION__" ]; then
-  printf '%sSession name: %s' "${ACCENT}" "${RESET}"
-  read -r NEW_NAME
-  if [ -n "$NEW_NAME" ]; then
-    exec claude "/rename $NEW_NAME"
+while true; do
+  if [ "$SORT_MODE" = "date" ]; then
+    LIST_ROWS=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=date)
+    SORT_LABEL="most recent first"
   else
-    exec claude
+    LIST_ROWS=$(python3 "$PLUGIN_SCRIPTS/list_sessions.py" --tsv --sort-by=session --grouped)
+    SORT_LABEL="A-Z"
   fi
-fi
 
-SESSION_PROJECT_PATH=$(printf '%s' "$SELECTED" | cut -f3)
-SESSION_JSONL_PATH=$(printf '%s' "$SELECTED" | cut -f6)
+  # --- Step 1: pick a project, alphabetically (or by date), up front. -----
+  SELECTED=$(printf '%s\n%s\n%s\n' "$NEW_SESSION_ROW" "$TOGGLE_SORT_ROW" "$LIST_ROWS" | \
+    fzf --ansi \
+        --delimiter='\t' \
+        --with-nth=7 \
+        --header="${ACCENT}${LOGO}${RESET}" \
+        --header-first \
+        --footer="type to search · enter/double-click: see options · esc: cancel  (sort: $SORT_LABEL)" \
+        --list-label=" All Sessions " \
+        "${FZF_BOX[@]}")
 
-# The list is a fresh scan each run, but a session can still vanish between
-# that scan and this exec — most commonly because it was just removed via
-# the ctrl-o/right-click menu's Delete action. Check for that explicitly and say so,
-# rather than letting `claude`'s raw "No conversation found" error surface
-# with no context.
-if [ ! -f "$SESSION_JSONL_PATH" ]; then
-  echo "This session no longer exists (it may have been deleted)." >&2
-  exit 1
-fi
+  if [ -z "$SELECTED" ]; then
+    echo "No session selected."
+    exit 0
+  fi
 
-if [ ! -d "$SESSION_PROJECT_PATH" ]; then
-  echo "Project directory no longer exists: $SESSION_PROJECT_PATH" >&2
-  exit 1
-fi
+  SESSION_ID=$(printf '%s' "$SELECTED" | cut -f4)
+  DISPLAY_NAME=$(printf '%s' "$SELECTED" | cut -f7)
 
-cd "$SESSION_PROJECT_PATH"
-exec claude --resume "$SESSION_ID"
+  # Letter-divider rows are unselectable in spirit — if one somehow gets
+  # accepted, just show the list again rather than treating it as a pick.
+  case "$DISPLAY_NAME" in
+    *§*) continue ;;
+  esac
+
+  if [ "$SESSION_ID" = "__TOGGLE_SORT__" ]; then
+    if [ "$SORT_MODE" = "date" ]; then SORT_MODE="session"; else SORT_MODE="date"; fi
+    continue
+  fi
+
+  if [ "$SESSION_ID" = "__NEW_SESSION__" ]; then
+    printf '%sSession name: %s' "${ACCENT}" "${RESET}"
+    read -r NEW_NAME
+    if [ -n "$NEW_NAME" ]; then
+      exec claude "/rename $NEW_NAME"
+    else
+      exec claude
+    fi
+  fi
+
+  CD_PATH=$(printf '%s' "$SELECTED" | cut -f3)
+  JSONL_PATH=$(printf '%s' "$SELECTED" | cut -f6)
+  WHEN=$(printf '%s' "$SELECTED" | cut -f1)
+
+  # --- Step 2: four boxes — Search, the short Open/Rename/Delete/Back
+  # list, a small metadata header, and a tall conversation-preview pane
+  # (the list is only 4 rows, so the preview can take most of the
+  # screen). Every option here is a plain row, picked the exact same
+  # (proven-reliable) way as step 1. -----------------------------------
+  INFO=$(python3 "$PLUGIN_SCRIPTS/preview_session.py" "$JSONL_PATH" "$WHEN" "$CD_PATH") || INFO=""
+  PREVIEW_CMD="python3 $(printf '%q' "$PLUGIN_SCRIPTS/preview_session.py") $(printf '%q' "$JSONL_PATH") --conversation"
+
+  ACTION=$(printf 'Open\nRename\nDelete\nBack\n' | \
+    fzf --layout=reverse \
+        --input-border=rounded --input-label=" 🔍 Search " \
+        --header="$INFO" --header-border=rounded --header-label=" Session Info " \
+        --list-border=rounded --list-label=" $DISPLAY_NAME " \
+        --preview="$PREVIEW_CMD" \
+        --preview-window="down,70%,border-rounded" \
+        --preview-label=" Conversation " \
+        --footer="type to search · enter/double-click: select · esc: back" \
+        --prompt="❯ " --ghost="Type to search" --pointer="▶" \
+        --bind="double-click:accept" \
+        --color="pointer:#d97757,prompt:#d97757,hl:#d97757,hl+:#d97757,fg+:#ffffff:bold,input-border:#d97757,input-label:#d97757:bold,list-border:#d97757,list-label:#d97757:bold,header:#d97757,header-border:#d97757,header-label:#d97757:bold,border:#d97757,footer:#d97757")
+
+  case "$ACTION" in
+    Open)
+      if [ ! -f "$JSONL_PATH" ]; then
+        echo "This session no longer exists (it may have been deleted)." >&2
+        continue
+      fi
+      if [ ! -d "$CD_PATH" ]; then
+        echo "Project directory no longer exists: $CD_PATH" >&2
+        read -r -p "Press enter to continue..." _
+        continue
+      fi
+      cd "$CD_PATH"
+      exec claude --resume "$SESSION_ID"
+      ;;
+    Rename)
+      printf 'New name: '
+      read -r NEW_NAME
+      if [ -n "$NEW_NAME" ]; then
+        claude --resume "$SESSION_ID" "/rename $NEW_NAME" || true
+      fi
+      ;;
+    Delete)
+      CONFIRM=$(printf 'Cancel\nYes, delete\n' | \
+        fzf --layout=reverse \
+            --list-border=rounded --list-label=" Delete: $DISPLAY_NAME " \
+            --footer="type to search · enter/double-click: select · esc: cancel" \
+            --footer-border=rounded \
+            --prompt="❯ " --pointer="▶" \
+            --bind="double-click:accept" \
+            --color="pointer:#d97757,prompt:#d97757,list-border:#d97757,list-label:#d97757:bold,footer:#d97757,footer-border:#d97757")
+      if [ "$CONFIRM" = "Yes, delete" ]; then
+        rm -f -- "$JSONL_PATH"
+      fi
+      ;;
+    *)
+      # Back, Esc, or any other cancel — do nothing, loop back to the list.
+      ;;
+  esac
+done

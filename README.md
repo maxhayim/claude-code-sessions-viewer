@@ -14,13 +14,13 @@
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey)](#requirements)
-[![Release](https://img.shields.io/badge/Release-v1.1.5-blue)](https://github.com/maxhayim/claude-code-sessions-viewer/releases/tag/v1.1.5)
+[![Release](https://img.shields.io/badge/Release-v2.0.0-blue)](https://github.com/maxhayim/claude-code-sessions-viewer/releases/tag/v2.0.0)
 
 > **Unofficial, community-built project. Not affiliated with, endorsed by,
 > or sponsored by Anthropic.** "[Claude Code](https://github.com/anthropics/claude-code)" refers to Anthropic's product;
 > this tool simply reads its local session files.
 
-> **Status: v1.1.5.** Verified end-to-end against real
+> **Status: v2.0.0.** Verified end-to-end against real
 > `~/.claude/projects/` data, including the Homebrew install path. See
 > [Known Limitations](#known-limitations) for what's still untested (multi-
 > machine coverage, Windows).
@@ -37,8 +37,8 @@ no real preview. This project adds two things on top:
   session, grouped by project, most recent first.
 - **`bin/claude-sessions`** — a standalone, `fzf`-powered visual browser:
   fuzzy search, arrow-key navigation, per-row context-usage indicators, and
-  a `ctrl-o` (or right-click) Open/Rename/Delete/Back menu (showing that session's info)
-  for every session.
+  an Open/Rename/Delete/Back menu (showing that session's info) for every
+  session, reached by picking it.
 
 ## Features
 
@@ -59,14 +59,11 @@ no real preview. This project adds two things on top:
   Code encodes both `/` and spaces as `-`, which makes folder-name decoding
   ambiguous — see [Known Limitations](#known-limitations))
 - Visual browser (`bin/claude-sessions`) adds fuzzy search and:
-  - **Enter / double-click** — resume the session directly
-  - **`ctrl-o` (or right-click)** — an Open / Rename / Delete / Back menu for the
-    highlighted session, showing its last-active date, location, and
+  - **Enter / double-click** a session — opens an Open / Rename / Delete /
+    Back menu for it, showing its last-active date, location, and
     context-window usage before you act on it
-  - **Tab + `ctrl-x`** — mark several sessions and bulk-delete them in one
-    confirm step
-  - **`ctrl-r` / `ctrl-n`** — switch between most-recent-first and
-    alphabetical sort, live
+  - **A pinned "↕ Toggle Sort" entry** — switches the list between
+    alphabetical and most-recent-first, live
   - **A pinned "+ Start New Session" entry** at the top of the list —
     prompts for a name and launches a new, already-named session
 - No network calls, no credentials, reads only local files — see
@@ -131,31 +128,28 @@ ln -s "$(pwd)/bin/claude-sessions" /usr/local/bin/claude-sessions
 ## Usage
 
 Inside the visual browser, everything is keyboard-driven — arrow keys +
-Enter, no mouse needed (double-click also works if you prefer it). There's
-no separate preview pane: `ctrl-o` (or right-click)'s menu shows a session's info right
-where you're about to act on it, so a single footer at the bottom of the
-box can genuinely span everything above it.
+Enter, no mouse needed (double-click also works if you prefer it). Every
+action is reached the same way: type/arrow to a row, then Enter or
+double-click to pick it — deliberately no other keybinds, since custom
+binds turned out to be unreliable in some terminal setups while plain
+Enter/double-click is not.
 
 - **Type anything** to fuzzy-search across all session names/previews — the
   search box is always live, no need to navigate to it first
 - **↑ / ↓** to move through the list; sessions are grouped into
   dictionary-style letter sections (`§ A`, `§ B`, ...), each showing a
   compact context-usage indicator like `[72K/200K]`
-- **Enter / double-click** resumes the highlighted session directly (`cd`s
-  into its project directory, then runs `claude --resume <id>`)
-- **`ctrl-o` (or right-click)** opens an action menu for the highlighted session, showing
+- **Enter / double-click** a session opens an action menu for it, showing
   its last-active date, location, and context usage first:
-  - **Open** — same as Enter
+  - **Open** — resumes it (`cd`s into its project directory, then runs
+    `claude --resume <id>`)
   - **Rename** — prompts for a new name and applies it via `/rename`
   - **Delete** — permanently removes that session's transcript file, after
     a confirmation step (no undo — see
     [Known Limitations](#known-limitations))
-  - **Back** — closes the menu, no change
-- **Tab** marks one or more sessions; **`ctrl-x`** bulk-deletes everything
-  marked (or just the highlighted one if nothing's marked) after one
-  confirm step
-- **`ctrl-r`** / **`ctrl-n`** switch the list between most-recent-first and
-  alphabetical, live
+  - **Back** — closes the menu, returns to the list
+- **↕ Toggle Sort**, pinned near the top of the list — switches between
+  alphabetical and most-recent-first
 - **+ Start New Session**, pinned at the very top of the list — prompts for
   a name, then launches a fresh `claude` session already named that
 - **Esc** cancels/backs out at any screen
