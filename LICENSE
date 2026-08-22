@@ -19,3 +19,23 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Third-Party Acknowledgments
+
+Claude Code Sessions Viewer is an independent, open-source project that
+interacts with or utilizes the following third-party software and
+platforms:
+
+- Claude Code is a product of Anthropic, PBC. This project reads its local
+  session storage but is not part of it.
+- fzf is an open-source command-line fuzzy finder created by Junegunn
+  Choi.
+- Python is an open-source programming language maintained by the Python
+  Software Foundation.
+- Homebrew is an open-source package manager for macOS and Linux
+  maintained by the Homebrew project.
+
+All trademarks, logos, and brand names are the property of their
+respective owners. This project is not affiliated with, endorsed by, or
+officially connected to Anthropic, PBC, or any of the other projects
+listed above.
