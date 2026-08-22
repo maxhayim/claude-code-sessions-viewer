@@ -40,6 +40,18 @@ no real preview. This project adds two things on top:
   an Open/Rename/Delete/Back menu (showing that session's info) for every
   session, reached by picking it.
 
+## Screenshots
+
+**The main list** — every session across every project, one flat
+alphabetical list:
+
+![Main list](assets/images/01-main-list.png)
+
+**Picking a session** opens the Open/Rename/Delete/Back menu, showing that
+session's info and a conversation preview:
+
+![Action menu](assets/images/02-action-menu-full-view.png)
+
 ## Features
 
 - Scans every project directory Claude Code has ever recorded a session in,
