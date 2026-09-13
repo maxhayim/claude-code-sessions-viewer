@@ -137,6 +137,21 @@ To use it from anywhere:
 ln -s "$(pwd)/bin/claude-sessions" /usr/local/bin/claude-sessions
 ```
 
+### Launching it
+
+Once installed (either way above), open a terminal — any directory, no
+need to `cd` anywhere first — and run:
+
+```bash
+claude-sessions
+```
+
+That's it; this single command is all you need from here on. Just make
+sure to run it directly in your own terminal, **not** as a slash command
+inside a running Claude Code session — resuming a session has to replace
+the current process, which a plugin command can't do from inside a
+session.
+
 ## Usage
 
 Inside the visual browser, everything is keyboard-driven — arrow keys +
