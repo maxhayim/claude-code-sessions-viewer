@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Fake `claude` binary for tests. Prepend this file's directory to PATH
+# to mock both live_sessions.py's subprocess call and bin/claude-sessions'
+# capability checks/execs, without needing a real Claude Code install,
+# a real session registry, or network access.
+#
+# Controlled via env vars:
+#   FAKE_CLAUDE_HELP_MODE=full|old     what `--help` reports (default: full)
+#   FAKE_CLAUDE_AGENTS_OUTPUT=<path>   file `agents --json` prints verbatim
+#                                       (default: a canned 2-session array)
+
+set -uo pipefail
+
+if [ "${1:-}" = "--help" ]; then
+  if [ "${FAKE_CLAUDE_HELP_MODE:-full}" = "old" ]; then
+    cat <<'EOF'
+Usage: claude [options] [command] [prompt]
+
+Options:
+  -r, --resume [value]   Resume a conversation by session ID or name
+  -p, --print            Print response and exit
+EOF
+  else
+    cat <<'EOF'
+Usage: claude [options] [command] [prompt]
+
+Options:
+  --cloud [description|session_id|url]  Create a cloud session, or attach
+                                        to an existing one by ID or URL
+  --teleport [session]                  Resume a teleport session
+  --from-pr [value]                     Resume a session linked to a PR
+  -r, --resume [value]                  Resume a conversation
+
+Commands:
+  agents [options]        Manage background agents
+  attach <id|name>         Open a background session in this terminal
+EOF
+  fi
+  exit 0
+fi
+
+if [ "${1:-}" = "agents" ] && [ "${2:-}" = "--json" ]; then
+  if [ -n "${FAKE_CLAUDE_AGENTS_OUTPUT:-}" ]; then
+    cat "$FAKE_CLAUDE_AGENTS_OUTPUT"
+  else
+    cat <<'EOF'
+[
+  {"pid":111,"cwd":"/tmp/one","kind":"interactive","startedAt":1700000000000,"sessionId":"aaaaaaaa-0000-0000-0000-000000000001","name":"Fixture One","status":"idle"},
+  {"pid":222,"cwd":"/tmp/two","kind":"background","startedAt":1700000001000,"sessionId":"bbbbbbbb-0000-0000-0000-000000000002","name":"Fixture Two","status":"busy"}
+]
+EOF
+  fi
+  exit 0
+fi
+
+# Any other invocation (attach/--cloud/etc., not exercised by the current
+# tests): report what was called and succeed, so nothing hangs or fails
+# in a confusing way if a future test calls through this far.
+echo "FAKE_CLAUDE_CALLED: $*" >&2
+exit 0

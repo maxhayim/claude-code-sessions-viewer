@@ -99,6 +99,22 @@ OUT=$(NO_COLOR=1 python3 "$LIST_SESSIONS")
 assert_contains "$OUT" "§" "letter divider present in human-readable output"
 
 echo
+echo "=== regression guard: --tsv rows still have exactly 7 fields ==="
+# Live/Cloud sessions (added in v3.0.0) have their own independent TSV
+# format and menus — this asserts that work never leaked an 8th column
+# into the Local format bin/claude-sessions' --with-nth=7 relies on.
+OUT=$(python3 "$LIST_SESSIONS" --tsv)
+FIELDCOUNT=$(printf '%s\n' "$OUT" | head -1 | awk -F'\t' '{print NF}')
+if [ "$FIELDCOUNT" = "7" ]; then
+  echo "PASS: --tsv row has exactly 7 tab-separated fields"
+else
+  echo "FAIL: --tsv row has exactly 7 tab-separated fields"
+  echo "  expected: 7"
+  echo "  actual:   $FIELDCOUNT"
+  FAILURES=$((FAILURES + 1))
+fi
+
+echo
 if [ "$FAILURES" -eq 0 ]; then
   echo "All tests passed."
   exit 0

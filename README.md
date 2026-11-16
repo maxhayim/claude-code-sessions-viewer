@@ -14,16 +14,21 @@
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey)](#requirements)
-[![Release](https://img.shields.io/badge/Release-v2.0.0-blue)](https://github.com/maxhayim/claude-code-sessions-viewer/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/Release-v3.0.0-blue)](https://github.com/maxhayim/claude-code-sessions-viewer/releases/tag/v3.0.0)
 
 > **Unofficial, community-built project. Not affiliated with, endorsed by,
 > or sponsored by Anthropic.** "[Claude Code](https://github.com/anthropics/claude-code)" refers to Anthropic's product;
-> this tool simply reads its local session files.
+> this tool simply reads its local session files and runs your own `claude`
+> binary.
 
-> **Status: v2.0.0.** Verified end-to-end against real
-> `~/.claude/projects/` data, including the Homebrew install path. See
-> [Known Limitations](#known-limitations) for what's still untested (multi-
-> machine coverage, Windows).
+> **Status: v3.0.0.** Local session browsing is verified end-to-end against
+> real `~/.claude/projects/` data, including the Homebrew install path. Live
+> Sessions and compact mode are verified on this machine and over a real
+> SSH session. Cloud Sessions' "Send follow-up" action and attaching to an
+> *interactive* (not backgrounded) session are unverified — see
+> [Known Limitations](#known-limitations). The Cardputer Zero itself has
+> not been tested by the maintainer directly; a device owner's test is the
+> next real-world check.
 
 **Claude Code Sessions Viewer** lists — and lets you visually browse — every 
 [Claude Code](https://github.com/anthropics/claude-code) session you've ever started, across every project directory and
@@ -38,7 +43,11 @@ no real preview. This project adds two things on top:
 - **`bin/claude-sessions`** — a standalone, `fzf`-powered visual browser:
   fuzzy search, arrow-key navigation, per-row context-usage indicators, and
   an Open/Rename/Delete/Back menu (showing that session's info) for every
-  session, reached by picking it.
+  session, reached by picking it. It also covers **Live Sessions** (other
+  `claude` processes already running on this machine) and **Cloud
+  Sessions** (Anthropic-hosted, via `claude --cloud`), and switches to a
+  **compact layout** on narrow terminals — see
+  [Remote, Cloud, and Compact Use](#remote-cloud-and-compact-use).
 
 ## Screenshots
 
@@ -78,8 +87,20 @@ session's info and a conversation preview:
     alphabetical and most-recent-first, live
   - **A pinned "+ Start New Session" entry** at the top of the list —
     prompts for a name and launches a new, already-named session
-- No network calls, no credentials, reads only local files — see
-  [SECURITY.md](SECURITY.md)
+  - **A pinned "⚡ Live Sessions" entry** — lists every other `claude`
+    process already running on this machine (interactive or backgrounded),
+    via `claude agents --json`, and lets you attach to one
+  - **A pinned "☁ Cloud Sessions" entry** — create, attach to, or resume
+    an Anthropic-hosted cloud session via `claude --cloud`/`--teleport`/
+    `--from-pr`
+  - **Compact mode** — auto-detects a narrow terminal (or force it with
+    `--compact`/`--no-compact`) and switches to a one-line header with a
+    trimmed layout, for small terminals like the M5Stack Cardputer Zero
+- Local session browsing makes no network calls, needs no credentials, and
+  reads only local files. Live/Cloud features run your own `claude` binary
+  under your own existing login — this project has no network/HTTP code of
+  its own and never touches your credentials. See [SECURITY.md](SECURITY.md)
+  for the full breakdown.
 
 ## Requirements
 
@@ -179,7 +200,39 @@ Enter/double-click is not.
   alphabetical and most-recent-first
 - **+ Start New Session**, pinned at the very top of the list — prompts for
   a name, then launches a fresh `claude` session already named that
+- **⚡ Live Sessions**, pinned — opens a list of every other `claude`
+  process currently running on this machine (interactive or backgrounded),
+  each shown as `[kind/status] cwd`. Picking one offers:
+  - **Attach** — runs `claude attach <id>`, handing control of that
+    running process to this terminal
+  - **Back** — closes the menu, returns to the list
+
+  This row only appears if your installed `claude` supports `agents`/
+  `attach`; there's no Rename/Delete here, since these aren't your own
+  idle transcripts — they're other processes actually running right now.
+- **☁ Cloud Sessions**, pinned — Claude Code has no documented way to
+  *list* existing cloud sessions, only to create one or attach by a known
+  ID or URL, so this is a static menu rather than a browsable list:
+  - **Create new cloud session** — optionally prompts for a description
+  - **Attach to existing (ID or URL)** — prompts for a session ID or
+    `claude.ai/code` URL
+  - **Resume teleport session** — prompts for a session (blank opens
+    `claude`'s own interactive picker)
+  - **Resume PR-linked session** — prompts for a PR number or URL (blank
+    opens `claude`'s own interactive picker)
+  - **Send follow-up to existing cloud session** — prompts for a session
+    ID and a message; **unverified**, see
+    [Known Limitations](#known-limitations)
+  - **Back** — closes the menu, returns to the list
+
+  This row only appears if your installed `claude` supports `--cloud`.
 - **Esc** cancels/backs out at any screen
+
+By default, `bin/claude-sessions` auto-detects a narrow terminal (under 90
+columns or 25 lines) and switches to a compact one-line header with no
+conversation preview. Force either layout with `--compact`/`--no-compact`,
+or set `CLAUDE_SESSIONS_VIEWER_COMPACT=1`/`0` — see
+[Remote, Cloud, and Compact Use](#remote-cloud-and-compact-use).
 
 ## How It Works
 
@@ -199,9 +252,97 @@ under a generic folder name. Everything is sorted alphabetically and
 either printed as plain text (`/list-sessions`) or piped into `fzf` with a
 live preview command (`bin/claude-sessions`).
 
+## Remote, Cloud, and Compact Use
+
+### Using it over SSH (e.g. the M5Stack Cardputer Zero)
+
+Standard install, then from any SSH session:
+
+```bash
+ssh user@host
+claude-sessions
+```
+
+No special remote mode or custom network service — it's the same binary,
+reading the same `~/.claude/projects/` (now on the remote host) and
+shelling out to the remote host's own `claude`. On a small terminal (the
+M5Stack Cardputer Zero, a Raspberry Pi Compute Module 0 running Debian
+ARM64, is the device this was built against) it auto-detects the narrow
+screen and switches to compact mode on its own; see
+[Troubleshooting a small terminal](#troubleshooting-a-small-terminal)
+below if it doesn't.
+
+### Tabby Terminal + tmux, for multiple tabs to the same host
+
+If you're connecting from [Tabby](https://tabby.sh/) (or any terminal) and
+want several tabs/panes against the same remote host without losing state
+when a connection drops, run a `tmux` session on the remote host itself and
+attach to it from each tab:
+
+```bash
+ssh user@host -t 'tmux new-session -A -s main'
+```
+
+This project doesn't manage `tmux` for you and has no `tmux` dependency —
+it's just a solid pairing if you want that resilience, since `claude-
+sessions` itself only needs a terminal, not a specific multiplexer.
+
+### Cloud Sessions: what it can and can't do
+
+`claude` has no documented command to list your existing cloud sessions —
+only to create a new one (`--cloud "description"`) or attach to one you
+already have the ID/URL for (`--cloud <id-or-url>`), resume a teleport
+session (`--teleport`), or resume a PR-linked one (`--from-pr`). The Cloud
+Sessions menu reflects that honestly: a short action list, not a browsable
+list of your actual cloud sessions. Creating or attaching to a cloud
+session runs against Anthropic's API under your own account and may be
+billed like any other `claude` use. The "Send follow-up" action
+(`-p` alongside `--cloud <id>`) is **unverified** — see
+[Known Limitations](#known-limitations).
+
+Claude Code's own `claude --remote-control` is a separate, Anthropic-built
+feature for driving a session from another device; see
+[the Claude Code docs](https://code.claude.com/docs/en/sessions) for it.
+This project only links to it — it is not reverse-engineered or built
+against here.
+
+### Running it from an always-on host (e.g. a VPS)
+
+There's no special configuration for this: install `claude` and this tool
+on any always-on Linux host the same way you would locally, make sure
+`claude` is authenticated there, and `ssh` in whenever you want to check
+or resume a session. Local, Live, and Cloud sessions all work the same way
+on that host as they do on your own machine.
+
+### SSH authentication
+
+Use key-based SSH authentication (`ssh-keygen` + `ssh-copy-id`, or your
+platform's equivalent) rather than passwords, and keep your private key
+unlocked via `ssh-agent` rather than typing a passphrase every time. This
+project doesn't introduce any SSH-specific setup of its own — standard SSH
+hardening advice (disable password auth, keep `authorized_keys` tight)
+applies here exactly as it would for any other remote shell access.
+
+### Troubleshooting a small terminal
+
+Compact mode triggers automatically under 90 columns or 25 lines
+(`${COLUMNS}`/`${LINES}`, falling back to `stty size` when those aren't
+set). If a particular terminal/SSH/serial setup doesn't report its size
+correctly and the layout looks wrong, force it explicitly:
+
+```bash
+claude-sessions --compact      # force the narrow layout
+claude-sessions --no-compact   # force the normal layout
+CLAUDE_SESSIONS_VIEWER_COMPACT=1 claude-sessions   # same, via env var
+```
+
+These thresholds are generic defaults tuned on a resized desktop terminal,
+not validated against the Cardputer Zero's actual screen geometry — see
+[Known Limitations](#known-limitations).
+
 ## Known Limitations
 
-- **Delete has no undo.** The ctrl-o/right-click menu's Delete action (after
+- **Delete has no undo.** The action menu's Delete action (after
   confirmation) permanently removes that session's `.jsonl` transcript
   file from disk. There's no trash/recovery — it's gone.
 - **Rename and new-session naming rely on an unverified assumption**: that
@@ -228,6 +369,25 @@ live preview command (`bin/claude-sessions`).
   plain-text `/list-sessions` command has no `fzf` dependency at all.
 - **macOS/Linux only, tested on macOS.** Windows is untested; paths and the
   `cd && exec` resume flow may need adjustment.
+- **Attaching to an *interactive* session is unverified.** `claude attach
+  <id>` has been confirmed against this project's own real running
+  sessions in testing, but attaching to a session that's currently
+  interactive (someone actively typing in it elsewhere), rather than
+  backgrounded, hasn't been independently confirmed to behave safely from
+  a second terminal.
+- **Cloud Sessions' "Send follow-up" action is unverified.** The exact
+  `-p` + `--cloud <id>` combination hasn't been independently confirmed to
+  send a one-shot follow-up to an existing cloud session, as opposed to,
+  say, creating a new one. The menu says so again at the point of use.
+- **Compact-mode thresholds aren't Cardputer-tuned.** The <90-column/
+  <25-line auto-detect was built and verified against a resized desktop
+  terminal and a real SSH session, not the M5Stack Cardputer Zero's own
+  screen directly — that's the next real-world check, by whoever has the
+  hardware. Force the layout manually if auto-detect gets it wrong (see
+  [Troubleshooting a small terminal](#troubleshooting-a-small-terminal)).
+- **Live Sessions shows every active `claude` process on the machine**,
+  not just ones started from this tool — see
+  [SECURITY.md](SECURITY.md#known-considerations).
 
 ## License
 

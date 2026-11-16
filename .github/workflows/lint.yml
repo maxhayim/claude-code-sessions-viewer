@@ -21,11 +21,13 @@ jobs:
         run: |
           python -m py_compile plugins/sessions-viewer/scripts/list_sessions.py
           python -m py_compile plugins/sessions-viewer/scripts/preview_session.py
+          python -m py_compile plugins/sessions-viewer/scripts/live_sessions.py
 
       - name: Shellcheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: './bin'
+        run: |
+          shellcheck -x bin/claude-sessions
+          shellcheck plugins/sessions-viewer/scripts/cloud_sessions.sh
+          shellcheck tests/test_live_sessions.sh tests/test_cloud_sessions.sh tests/test_claude_sessions_bash.sh tests/fixtures/claude
 
       - name: Validate marketplace.json
         run: python -m json.tool .claude-plugin/marketplace.json > /dev/null
@@ -34,4 +36,8 @@ jobs:
         run: python -m json.tool plugins/sessions-viewer/.claude-plugin/plugin.json > /dev/null
 
       - name: Functional tests
-        run: ./tests/test_list_sessions.sh
+        run: |
+          ./tests/test_list_sessions.sh
+          ./tests/test_live_sessions.sh
+          ./tests/test_cloud_sessions.sh
+          ./tests/test_claude_sessions_bash.sh
